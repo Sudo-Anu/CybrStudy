@@ -158,6 +158,7 @@ export default function HomePage() {
           {/* Quick Hero Search Input */}
           <form
             onSubmit={handleHeroSearch}
+            className="hero-search-form"
             style={{
               maxWidth: 540,
               marginInline: 'auto',
@@ -212,12 +213,12 @@ export default function HomePage() {
               <span className="stat-value">{sections.length}</span>
               <span className="stat-label">Folders & Sections</span>
             </div>
-            <div style={{ width: 1, height: 32, background: 'var(--color-border)', alignSelf: 'center' }} />
+            <div className="stat-divider" style={{ width: 1, height: 32, background: 'var(--color-border)', alignSelf: 'center' }} />
             <div className="stat-item" style={{ alignItems: 'center' }}>
               <span className="stat-value">{totalFiles}</span>
               <span className="stat-label">Study Materials</span>
             </div>
-            <div style={{ width: 1, height: 32, background: 'var(--color-border)', alignSelf: 'center' }} />
+            <div className="stat-divider" style={{ width: 1, height: 32, background: 'var(--color-border)', alignSelf: 'center' }} />
             <div className="stat-item" style={{ alignItems: 'center' }}>
               <span className="stat-value">100%</span>
               <span className="stat-label">In-Browser Preview</span>

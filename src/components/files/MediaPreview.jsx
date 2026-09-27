@@ -94,7 +94,7 @@ export default function MediaPreview({ file, onClose }) {
             {file.name}
           </h2>
           {file.size && (
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', flexShrink: 0 }}>
+            <span className="preview-file-size" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', flexShrink: 0 }}>
               ({formatBytes(file.size)})
             </span>
           )}

@@ -201,10 +201,10 @@ function FileRowList({ file, onDelete, isAdmin }) {
         </div>
         <div className="file-row-actions">
           <button className="btn btn-secondary btn-sm" onClick={() => setShowPreview(true)} aria-label={`Preview ${file.name}`} id={`preview-btn-${file.id}`}>
-            <IconEye /> Preview
+            <IconEye /> <span>Preview</span>
           </button>
           <a href={file.driveDownloadUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm" aria-label={`Download ${file.name}`} id={`download-btn-${file.id}`}>
-            <IconDownload /> Download
+            <IconDownload /> <span>Download</span>
           </a>
           {isAdmin && (
             <>

@@ -348,11 +348,9 @@
   height: 100%;
   overflow: auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: var(--space-2);
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 
 .preview-image {
@@ -365,6 +363,7 @@
   transform-origin: center center;
   user-select: none;
   -webkit-user-drag: none;
+  margin: auto;
 }
 
 /* Floating Zoom Bar for Images */
@@ -425,15 +424,23 @@
     font-size: var(--text-sm);
   }
 
+  .preview-file-size {
+    display: none;
+  }
+
   .preview-body {
     padding: 0;
   }
 
   .preview-pdf-frame {
     border-radius: 0;
-    max-width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-width: 100% !important;
+    border: none;
     box-shadow: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   .preview-btn-text {
@@ -442,8 +449,8 @@
 
   .preview-toolbar .btn {
     padding: var(--space-2);
-    min-width: 36px;
-    height: 36px;
+    min-width: 38px;
+    height: 38px;
     justify-content: center;
   }
 
@@ -453,13 +460,18 @@
   }
 
   .preview-zoom-btn {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
   }
 
   .preview-zoom-label {
     font-size: 11px;
     min-width: 36px;
+  }
+
+  /* Make admin actions visible on touch devices */
+  .file-card-admin-actions {
+    opacity: 1 !important;
   }
 }
 
@@ -877,10 +889,97 @@
 }
 
 @media (max-width: 640px) {
-  .file-row-actions .btn span { display: none; }
-  .file-row-actions .btn { padding: var(--space-2); }
-  .stats-row { gap: var(--space-4); }
+  /* File row on mobile: stack cleanly and provide full tap targets */
+  .file-row {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+  .file-row-meta {
+    min-width: calc(100% - 50px);
+  }
+  .file-row-name {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+  }
+  .file-row-actions {
+    width: 100%;
+    justify-content: flex-end;
+    border-top: 1px solid var(--color-border-light);
+    padding-top: var(--space-2);
+    gap: var(--space-2);
+  }
+  .file-row-actions .btn {
+    flex: 1;
+    justify-content: center;
+    padding: var(--space-2) var(--space-3);
+  }
+  .file-row-actions .btn-icon {
+    flex: 0 0 36px;
+    height: 36px;
+  }
+
+  /* Horizontal scrolling chips */
+  .chip-row {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .chip-row::-webkit-scrollbar { display: none; }
+
+  /* Scope switch full width */
+  .scope-switch {
+    width: 100%;
+    display: flex;
+  }
+  .scope-switch-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Stats row on mobile */
+  .stats-row {
+    gap: var(--space-4);
+    justify-content: center;
+  }
   .stat-value { font-size: var(--text-xl); }
+  .stat-divider { display: none !important; }
+
+  /* Toolbar and hero search on mobile */
+  .browse-toolbar-box {
+    padding: var(--space-3) !important;
+  }
+  .hero-search-form {
+    padding: 4px !important;
+  }
+  .hero-search-form .btn {
+    padding: 0 var(--space-3) !important;
+    font-size: var(--text-xs) !important;
+  }
+
+  /* Command Palette / Search Modal on mobile */
+  .search-modal-overlay {
+    padding: 0 !important;
+    align-items: stretch !important;
+  }
+  .search-modal-card {
+    max-height: 100dvh !important;
+    height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+  .search-modal-header {
+    padding: calc(var(--space-3) + env(safe-area-inset-top, 0px)) var(--space-4) var(--space-3) var(--space-4);
+  }
+  .search-modal-body {
+    max-height: calc(100dvh - 120px) !important;
+    padding: var(--space-2);
+  }
 }
 
 /* ---- Header Search Button ---- */

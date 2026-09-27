@@ -225,6 +225,7 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
         @media (max-width: 768px) {
           .header-search-container { display: none !important; }
           .mobile-search-trigger-btn { display: flex !important; }
+          .desktop-nav-links { display: none !important; }
         }
       `}</style>
 

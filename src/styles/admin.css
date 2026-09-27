@@ -233,15 +233,30 @@
 /* ---- Responsive Admin ---- */
 @media (max-width: 768px) {
   .admin-layout { grid-template-columns: 1fr; }
+  .admin-mobile-header { display: flex !important; }
   .admin-sidebar {
     position: fixed;
     left: 0;
     top: 0;
     height: 100dvh;
+    width: min(300px, 85vw);
     transform: translateX(-100%);
     transition: transform var(--transition-base);
     z-index: 100;
+    box-shadow: var(--shadow-xl);
   }
   .admin-sidebar--open { transform: translateX(0); }
   .admin-content { padding: var(--space-4); }
+
+  /* Make actions always visible on touch screens */
+  .section-node-actions {
+    opacity: 1 !important;
+  }
+  .section-node-actions .btn {
+    min-width: 32px;
+    height: 32px;
+  }
+  .section-node {
+    padding: var(--space-2) var(--space-3);
+  }
 }

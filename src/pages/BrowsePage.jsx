@@ -613,16 +613,19 @@ export default function BrowsePage() {
       )}
 
       {/* Search, Filter, Sort, and Scope Bar */}
-      <div style={{
-        background: 'var(--color-surface)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 'var(--radius-xl)',
-        padding: 'var(--space-4)',
-        marginBottom: 'var(--space-6)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--space-3)',
-      }}>
+      <div
+        className="browse-toolbar-box"
+        style={{
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 'var(--radius-xl)',
+          padding: 'var(--space-4)',
+          marginBottom: 'var(--space-6)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-3)',
+        }}
+      >
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Search box */}
           <div style={{ flex: '1 1 260px' }}>
