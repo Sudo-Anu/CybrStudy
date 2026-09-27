@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+
+# Environment files
+.env
+.env.example
+.env.local
+.env.production
+.env.*.local
+
+# Backup folder
+backup/
+
+# Logs & System
+*.log
+.DS_Store
+
