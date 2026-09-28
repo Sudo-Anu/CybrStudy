@@ -17,7 +17,7 @@ import AdminPage       from './pages/AdminPage';
 // Only accessible by typing the full URL manually.
 // Change VITE_ADMIN_ROUTE in .env to customize it.
 
-const ADMIN_BASE = import.meta.env.VITE_ADMIN_ROUTE || '/admin-portal-xyz';
+const ADMIN_BASE = import.meta.env.VITE_ADMIN_ROUTE || '/login';
 
 export default function App() {
   return (
