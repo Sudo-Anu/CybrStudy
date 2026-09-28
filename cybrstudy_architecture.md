@@ -171,13 +171,13 @@ base: '/CybrStudy/',  // ← Change to your GitHub repo name
 > [!CAUTION]
 > **Never link to this URL from the public site.** It is hidden by design.
 
-Access at: `https://YOUR_USERNAME.github.io/CybrStudy/#/admin-portal-xyz`
+Access at: `https://YOUR_USERNAME.github.io/CybrStudy/#/login`
 
-Or locally: `http://localhost:5173/#/admin-portal-xyz`
+Or locally: `http://localhost:5173/#/login`
 
-To **change the hidden path**, edit line 13 of [`App.jsx`](file:///c:/Users/Aniruddha Raut/Documents/Projects/CybrStudy/src/App.jsx):
-```js
-const ADMIN_BASE = '/admin-portal-xyz'; // ← Change this
+To **customize the path**, set `VITE_ADMIN_ROUTE` in `.env`:
+```env
+VITE_ADMIN_ROUTE=/login
 ```
 
 ---
@@ -212,4 +212,4 @@ npm run dev
 ```
 
 Open: `http://localhost:5173/`  
-Admin: `http://localhost:5173/#/admin-portal-xyz`
+Admin: `http://localhost:5173/#/login`

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { buildTree } from '../../hooks/useSections';
 import { useAuth } from '../../context/AuthContext';
+import { ADMIN_BASE } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
 
 // Check if a node contains the currently active section in its sub-tree
@@ -218,7 +219,7 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
             </Link>
             {user && (
               <Link
-                to="/admin-portal-xyz/dashboard"
+                to={`${ADMIN_BASE}/dashboard`}
                 onClick={onClose}
                 className="sidebar-root-link"
                 style={{ color: 'var(--color-accent)' }}

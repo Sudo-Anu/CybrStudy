@@ -8,16 +8,12 @@ import HomePage        from './pages/HomePage';
 import BrowsePage      from './pages/BrowsePage';
 import AdminLoginPage  from './pages/AdminLoginPage';
 import AdminPage       from './pages/AdminPage';
+import { ADMIN_BASE }  from './utils/constants';
 
 // HashRouter is required for GitHub Pages static hosting.
 // All routes use /#/ prefix automatically.
 //
-// HIDDEN ADMIN ROUTE: /admin-portal-xyz
-// This path is NOT linked anywhere in the public UI.
-// Only accessible by typing the full URL manually.
-// Change VITE_ADMIN_ROUTE in .env to customize it.
-
-const ADMIN_BASE = import.meta.env.VITE_ADMIN_ROUTE || '/login';
+// Admin route base is configurable via VITE_ADMIN_ROUTE in .env, defaults to '/login'.
 
 export default function App() {
   return (
@@ -32,9 +28,23 @@ export default function App() {
                 <Route path="/browse" element={<Layout><BrowsePage /></Layout>} />
                 <Route path="/browse/:sectionId" element={<Layout><BrowsePage /></Layout>} />
 
-                {/* ---- Hidden Admin routes (no layout wrapper) ---- */}
-                <Route path={ADMIN_BASE}             element={<AdminLoginPage />} />
+                {/* ---- Admin routes (no layout wrapper) ---- */}
+                <Route path={ADMIN_BASE}                element={<AdminLoginPage />} />
                 <Route path={`${ADMIN_BASE}/dashboard`} element={<AdminPage />} />
+
+                {/* Convenience redirects */}
+                {ADMIN_BASE !== '/admin-portal-xyz' && (
+                  <>
+                    <Route path="/admin-portal-xyz" element={<Navigate to={ADMIN_BASE} replace />} />
+                    <Route path="/admin-portal-xyz/*" element={<Navigate to={ADMIN_BASE} replace />} />
+                  </>
+                )}
+                {ADMIN_BASE !== '/admin' && (
+                  <>
+                    <Route path="/admin" element={<Navigate to={ADMIN_BASE} replace />} />
+                    <Route path="/admin/*" element={<Navigate to={ADMIN_BASE} replace />} />
+                  </>
+                )}
 
                 {/* ---- Fallback ---- */}
                 <Route path="*" element={<Navigate to="/" replace />} />

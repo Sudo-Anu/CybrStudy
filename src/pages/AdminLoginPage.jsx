@@ -1,13 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { loginAdmin } from '../services/authService';
+import { ADMIN_BASE } from '../utils/constants';
 
 export default function AdminLoginPage() {
+  const { user } = useAuth();
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate(`${ADMIN_BASE}/dashboard`, { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +24,7 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       await loginAdmin(email, password);
-      navigate('/admin-portal-xyz/dashboard');
+      navigate(`${ADMIN_BASE}/dashboard`);
     } catch (err) {
       setError('Invalid credentials. Please try again.');
     } finally {

@@ -96,11 +96,11 @@ Enable GitHub Pages: **Settings → Pages → Source: GitHub Actions**
 
 ## Admin Access
 
-The admin panel is intentionally hidden from all navigation.
+The admin portal can be accessed directly at:
 
-Access it at: `https://YOUR_USERNAME.github.io/CybrStudy/#/admin-portal-xyz`
+`https://YOUR_USERNAME.github.io/CybrStudy/#/login`
 
-*(Change the route in `vite.config.js` → `VITE_ADMIN_ROUTE` to something unique)*
+*(You can configure a custom admin route via `VITE_ADMIN_ROUTE` in `.env`)*
 
 ---
 

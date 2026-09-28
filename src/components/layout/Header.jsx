@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { ADMIN_BASE } from '../../utils/constants';
 import SearchModal from '../ui/SearchModal';
 import ThemeToggle from '../ui/ThemeToggle';
 
@@ -163,7 +164,7 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
 
               {user && (
                 <Link
-                  to="/admin-portal-xyz/dashboard"
+                  to={`${ADMIN_BASE}/dashboard`}
                   style={{
                     padding: 'var(--space-1) var(--space-3)',
                     borderRadius: 'var(--radius-full)',
