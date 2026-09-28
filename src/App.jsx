@@ -29,22 +29,22 @@ export default function App() {
                 <Route path="/browse/:sectionId" element={<Layout><BrowsePage /></Layout>} />
 
                 {/* ---- Admin routes (no layout wrapper) ---- */}
-                <Route path={ADMIN_BASE}                element={<AdminLoginPage />} />
-                <Route path={`${ADMIN_BASE}/dashboard`} element={<AdminPage />} />
+                <Route path="/login"                    element={<AdminLoginPage />} />
+                <Route path="/login/dashboard"          element={<AdminPage />} />
 
-                {/* Convenience redirects */}
-                {ADMIN_BASE !== '/admin-portal-xyz' && (
+                {/* If a custom ADMIN_BASE is specified, support it too */}
+                {ADMIN_BASE !== '/login' && (
                   <>
-                    <Route path="/admin-portal-xyz" element={<Navigate to={ADMIN_BASE} replace />} />
-                    <Route path="/admin-portal-xyz/*" element={<Navigate to={ADMIN_BASE} replace />} />
+                    <Route path={ADMIN_BASE}                element={<AdminLoginPage />} />
+                    <Route path={`${ADMIN_BASE}/dashboard`} element={<AdminPage />} />
                   </>
                 )}
-                {ADMIN_BASE !== '/admin' && (
-                  <>
-                    <Route path="/admin" element={<Navigate to={ADMIN_BASE} replace />} />
-                    <Route path="/admin/*" element={<Navigate to={ADMIN_BASE} replace />} />
-                  </>
-                )}
+
+                {/* Convenience & legacy redirects */}
+                <Route path="/admin-portal-xyz" element={<Navigate to="/login" replace />} />
+                <Route path="/admin-portal-xyz/*" element={<Navigate to="/login" replace />} />
+                <Route path="/admin" element={<Navigate to="/login" replace />} />
+                <Route path="/admin/*" element={<Navigate to="/login" replace />} />
 
                 {/* ---- Fallback ---- */}
                 <Route path="*" element={<Navigate to="/" replace />} />

@@ -9,11 +9,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CybrStudy</title>
     <script>
-      // Redirect to root with the path preserved as a hash
-      const path = window.location.pathname
-        .replace('/CybrStudy', '')
-        .replace(/^\//, '');
-      window.location.replace('/CybrStudy/#/' + path + window.location.search);
+      // GitHub Pages SPA Fallback
+      var pathname = window.location.pathname;
+      var clean = pathname.replace(/\/cybrstudy\/?/i, '').replace(/^\/+/, '').replace(/\/+$/, '');
+      var base = pathname.toLowerCase().indexOf('/cybrstudy') !== -1 ? '/CybrStudy/' : '/';
+      if (clean === 'admin' || clean === 'admin-portal-xyz') {
+        clean = 'login';
+      }
+      window.location.replace(base + '#/' + clean + window.location.search);
     </script>
   </head>
   <body></body>
