@@ -3,8 +3,8 @@ import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { logoutAdmin } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { useSections } from '../hooks/useSections';
-import { createSection } from '../services/firebase';
 import SectionManager from '../components/admin/SectionManager';
+import TargetSectionSelector from '../components/admin/TargetSectionSelector';
 import FileUploader from '../components/admin/FileUploader';
 import UserManager from '../components/admin/UserManager';
 import NotificationManager from '../components/admin/NotificationManager';
@@ -29,18 +29,6 @@ export default function AdminPage() {
   const [activeTab,          setActiveTab]          = useState('sections');
   const [selectedSectionId,  setSelectedSectionId]  = useState(null);
   const [mobileNavOpen,      setMobileNavOpen]      = useState(false);
-
-  const handleQuickCreateFolder = async () => {
-    const name = window.prompt('Enter new folder/section name:');
-    if (!name?.trim()) return;
-    try {
-      const docRef = await createSection(name.trim(), null, sections.length);
-      setSelectedSectionId(docRef.id);
-      addToast(`Folder "${name.trim()}" created and selected.`, 'success');
-    } catch (err) {
-      addToast('Failed to create folder: ' + err.message, 'error');
-    }
-  };
 
   if (authLoading) return <Spinner center size="lg" />;
 
@@ -176,53 +164,14 @@ export default function AdminPage() {
               </p>
             </div>
 
-            {/* Section picker */}
-            <div style={{
-              background: 'var(--color-bg-alt)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-xl)',
-              padding: 'var(--space-4)',
-              marginBottom: 'var(--space-6)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-4)',
-              flexWrap: 'wrap',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round">
-                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--color-text-2)' }}>
-                  Target section:
-                </span>
-              </div>
-              <select
-                className="input-field"
-                style={{ flex: 1, maxWidth: 400 }}
-                value={selectedSectionId ?? ''}
-                onChange={(e) => setSelectedSectionId(e.target.value || null)}
-                id="section-picker-select"
-              >
-                <option value="">— Select a section —</option>
-                {sections.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.parentId ? `  ↳ ${s.name}` : s.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                onClick={handleQuickCreateFolder}
-                id="quick-create-folder-btn"
-                title="Create a new folder directly"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                New Folder
-              </button>
-            </div>
+            {/* Hierarchical Target Section Selector */}
+            <TargetSectionSelector
+              sections={sections}
+              tree={tree}
+              selectedSectionId={selectedSectionId}
+              onSelectSection={setSelectedSectionId}
+              onSwitchToSectionsTab={() => setActiveTab('sections')}
+            />
 
             <FileUploader
               sectionId={selectedSectionId}
