@@ -14,6 +14,13 @@ function doPost(e) {
   cors.setMimeType(ContentService.MimeType.JSON);
 
   try {
+    if (!e || !e.postData || !e.postData.contents) {
+      cors.setContent(JSON.stringify({
+        error: 'No post data received. Payload may have exceeded server limits or connection was interrupted.'
+      }));
+      return cors;
+    }
+
     var body   = JSON.parse(e.postData.contents);
     var action = body.action;
     var result = {};
@@ -22,6 +29,8 @@ function doPost(e) {
       result = handleUpload(body);
     } else if (action === 'delete') {
       result = handleDelete(body);
+    } else if (action === 'info') {
+      result = handleInfo(body);
     } else {
       result = { error: 'Unknown action: ' + action };
     }
@@ -84,3 +93,32 @@ function handleDelete(body) {
     return { error: 'Failed to delete file: ' + err.message };
   }
 }
+
+// ---- Info / Metadata handler ----
+function handleInfo(body) {
+  var fileId = body.fileId;
+  if (!fileId) return { error: 'fileId is required' };
+
+  try {
+    var file = DriveApp.getFileById(fileId);
+    // Ensure file is publicly accessible with link
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (permErr) {
+      // Permission might be managed by parent folder or restricted
+    }
+
+    return {
+      success:     true,
+      fileId:      fileId,
+      name:        file.getName(),
+      mimeType:    file.getMimeType(),
+      size:        file.getSize(),
+      viewUrl:     'https://drive.google.com/file/d/' + fileId + '/view',
+      downloadUrl: 'https://drive.google.com/uc?export=download&id=' + fileId,
+    };
+  } catch (err) {
+    return { error: 'Unable to access file: ' + err.message + '. Please ensure sharing is set to "Anyone with the link can view".' };
+  }
+}
+

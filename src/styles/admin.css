@@ -186,6 +186,55 @@
   color: var(--color-text-3);
 }
 
+/* ---- Upload Mode Switcher ---- */
+.upload-mode-switcher {
+  display: flex;
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 4px;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.upload-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  border: none;
+  background: transparent;
+  color: var(--color-text-2);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.upload-mode-btn:hover {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+
+.upload-mode-btn--active {
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font-weight: var(--fw-semibold);
+  box-shadow: var(--shadow-sm);
+}
+
+.upload-drive-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
 /* ---- Admin Login ---- */
 .login-page {
   min-height: 100dvh;
