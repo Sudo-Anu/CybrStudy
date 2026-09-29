@@ -1,23 +1,27 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { logoutAdmin } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 import { useSections } from '../hooks/useSections';
 import { createSection } from '../services/firebase';
 import SectionManager from '../components/admin/SectionManager';
 import FileUploader from '../components/admin/FileUploader';
+import UserManager from '../components/admin/UserManager';
+import NotificationManager from '../components/admin/NotificationManager';
 import Spinner from '../components/ui/Spinner';
 import { useToast } from '../context/ToastContext';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import { ADMIN_BASE } from '../utils/constants';
 
 const TABS = [
-  { id: 'sections', label: 'Sections', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> },
-  { id: 'upload',   label: 'Upload Files', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> },
+  { id: 'sections',      label: 'Sections',      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> },
+  { id: 'upload',        label: 'Upload Files',  icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> },
+  { id: 'notifications', label: 'Notifications', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> },
+  { id: 'users',         label: 'Users',         icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
 ];
 
 export default function AdminPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const { sections, tree, loading: sectionsLoading } = useSections();
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -40,10 +44,16 @@ export default function AdminPage() {
 
   if (authLoading) return <Spinner center size="lg" />;
 
-  // Guard: redirect to login if not authenticated
+  // Guard: not logged in → admin login
   if (!user) {
     return <Navigate to={ADMIN_BASE} replace />;
   }
+
+  // Guard: logged in but NOT an admin → back to admin login
+  if (!isAdmin) {
+    return <Navigate to={ADMIN_BASE} replace />;
+  }
+
 
   const handleLogout = async () => {
     await logoutAdmin();
@@ -57,21 +67,29 @@ export default function AdminPage() {
     <div className="admin-layout">
       {/* Sidebar */}
       <aside className={`admin-sidebar${mobileNavOpen ? ' admin-sidebar--open' : ''}`}>
-        <div className="admin-sidebar-logo">
+        <Link
+          to="/"
+          className="admin-sidebar-logo"
+          style={{ textDecoration: 'none', cursor: 'pointer' }}
+          title="Go to Homepage"
+          id="admin-logo-home-link"
+        >
           <div style={{
             width: 36, height: 36, borderRadius: 'var(--radius-lg)',
             background: 'var(--color-accent-muted)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'background var(--transition-fast)',
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
             </svg>
           </div>
           <div>
-            <h2 style={{ fontSize: 'var(--text-md)' }}>CybrStudy</h2>
-            <span>Admin Panel</span>
+            <h2 style={{ fontSize: 'var(--text-md)', color: 'var(--color-text)' }}>CybrStudy</h2>
+            <span style={{ color: 'var(--color-text-3)' }}>Admin Panel</span>
           </div>
-        </div>
+        </Link>
 
         {/* Navigation tabs */}
         {TABS.map((tab) => (
@@ -212,6 +230,12 @@ export default function AdminPage() {
             />
           </div>
         )}
+
+        {/* Users tab */}
+        {activeTab === 'users' && <UserManager />}
+
+        {/* Notifications tab */}
+        {activeTab === 'notifications' && <NotificationManager />}
       </div>
 
       {/* Mobile overlay */}

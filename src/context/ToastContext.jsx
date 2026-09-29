@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 import '../styles/components.css';
 
 const ToastContext = createContext(null);
@@ -20,6 +20,7 @@ export function ToastProvider({ children }) {
     success: '✓',
     error:   '✕',
     info:    'ℹ',
+    warning: '⚠',
   };
 
   return (
@@ -29,7 +30,7 @@ export function ToastProvider({ children }) {
         {toasts.map((t) => (
           <div key={t.id} className={`toast toast--${t.type}`} role="alert">
             <span style={{ fontWeight: 600, fontSize: '1rem', flexShrink: 0 }}>
-              {icons[t.type]}
+              {icons[t.type] || 'ℹ'}
             </span>
             <span style={{ flex: 1, color: 'var(--color-text)', fontSize: 'var(--text-sm)' }}>
               {t.message}

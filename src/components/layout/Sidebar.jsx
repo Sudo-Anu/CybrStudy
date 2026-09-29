@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { buildTree } from '../../hooks/useSections';
 import { useAuth } from '../../context/AuthContext';
@@ -13,33 +13,12 @@ function hasActiveDescendant(node, currentId) {
   );
 }
 
-// Tree node component with toggleable expansion and clean hover/active states
-function SidebarNode({ node, depth = 0, currentSectionId, onNavigate }) {
-  const hasChildren = Boolean(node.children && node.children.length > 0);
-  const isSelfActive = currentSectionId === node.id;
+// Tree node — expansion state is owned by the parent via expandedIds Set
+function SidebarNode({ node, depth = 0, currentSectionId, onNavigate, expandedIds, onToggle }) {
+  const hasChildren   = Boolean(node.children && node.children.length > 0);
+  const isSelfActive  = currentSectionId === node.id;
   const isChildActive = hasActiveDescendant(node, currentSectionId);
-
-  // Expand by default if root level or contains active section
-  const [isExpanded, setIsExpanded] = useState(() => depth === 0 || isSelfActive || isChildActive);
-
-  // Auto-expand whenever active section changes into this branch
-  useEffect(() => {
-    if (isSelfActive || isChildActive) {
-      setIsExpanded(true);
-    }
-  }, [isSelfActive, isChildActive]);
-
-  const handleToggle = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsExpanded((v) => !v);
-  };
-
-  const handleLinkClick = () => {
-    if (onNavigate) {
-      onNavigate();
-    }
-  };
+  const isExpanded    = expandedIds.has(node.id);
 
   return (
     <li className="sidebar-node-item">
@@ -49,7 +28,7 @@ function SidebarNode({ node, depth = 0, currentSectionId, onNavigate }) {
           <button
             type="button"
             className={`sidebar-node-toggle${isExpanded ? ' sidebar-node-toggle--expanded' : ''}`}
-            onClick={handleToggle}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(node.id); }}
             aria-label={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
             title={isExpanded ? 'Collapse subfolders' : 'Expand subfolders'}
           >
@@ -65,30 +44,23 @@ function SidebarNode({ node, depth = 0, currentSectionId, onNavigate }) {
         <Link
           to={`/browse/${node.id}`}
           className={`sidebar-node-link${isSelfActive ? ' sidebar-node-link--active' : ''}`}
-          onClick={handleLinkClick}
+          onClick={() => { if (onNavigate) onNavigate(); }}
           title={node.name}
           id={`sidebar-section-${node.id}`}
         >
           {/* Folder Icon (open vs closed) */}
           <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
+            width="15" height="15" viewBox="0 0 24 24" fill="none"
             stroke={isSelfActive ? 'var(--color-accent)' : 'currentColor'}
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
             style={{ flexShrink: 0, opacity: isSelfActive ? 1 : 0.75 }}
           >
             {hasChildren && isExpanded ? (
-              /* Open Folder */
               <>
                 <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
                 <path d="M2 10h20" />
               </>
             ) : (
-              /* Closed Folder */
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             )}
           </svg>
@@ -116,6 +88,8 @@ function SidebarNode({ node, depth = 0, currentSectionId, onNavigate }) {
               depth={depth + 1}
               currentSectionId={currentSectionId}
               onNavigate={onNavigate}
+              expandedIds={expandedIds}
+              onToggle={onToggle}
             />
           ))}
         </ul>
@@ -128,9 +102,39 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
   const tree = buildTree(sections);
   const { pathname } = useLocation();
   const { sectionId } = useParams();
-  const { user } = useAuth();
+  const { isAdmin } = useAuth();
 
-  // Root browse link is active when on /browse without a specific sectionId
+  // expandedIds lives here — survives tree re-renders, never reset by React recycling
+  const [expandedIds, setExpandedIds] = useState(() => new Set());
+
+  // When active section changes, expand all its ancestors automatically
+  useEffect(() => {
+    if (!sectionId || tree.length === 0) return;
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      const expandAncestors = (nodes) => {
+        for (const node of nodes) {
+          if (node.id === sectionId || hasActiveDescendant(node, sectionId)) {
+            next.add(node.id);
+          }
+          if (node.children?.length) expandAncestors(node.children);
+        }
+      };
+      expandAncestors(tree);
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionId, sections]);
+
+  const handleToggle = useCallback((id) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const isBrowseRoot = pathname === '/browse';
 
   return (
@@ -154,13 +158,9 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               <div
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 'var(--radius-md)',
+                  width: 28, height: 28, borderRadius: 'var(--radius-md)',
                   background: 'var(--color-accent-muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round">
@@ -217,7 +217,7 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
               </svg>
               <span>Browse All</span>
             </Link>
-            {user && (
+            {isAdmin && (
               <Link
                 to={`${ADMIN_BASE}/dashboard`}
                 onClick={onClose}
@@ -282,6 +282,8 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
               depth={0}
               currentSectionId={sectionId}
               onNavigate={onClose}
+              expandedIds={expandedIds}
+              onToggle={handleToggle}
             />
           ))}
         </ul>

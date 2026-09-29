@@ -71,6 +71,11 @@ export async function deleteFromDrive(fileId) {
     body: JSON.stringify({ action: 'delete', fileId }),
   });
 
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Drive delete failed: ${text}`);
+  }
+
   const result = await response.json();
   if (result.error) throw new Error(result.error);
   return result;
@@ -80,7 +85,11 @@ export async function deleteFromDrive(fileId) {
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload  = () => resolve(reader.result.split(',')[1]); // strip data: prefix
+    reader.onload  = () => {
+      const res = reader.result || '';
+      const base64 = res.includes(',') ? res.split(',')[1] : res;
+      resolve(base64);
+    };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });

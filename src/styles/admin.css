@@ -260,3 +260,104 @@
     padding: var(--space-2) var(--space-3);
   }
 }
+
+/* =============================================================
+   User Login Page
+   ============================================================= */
+
+.user-login-page {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Soft radial glow behind the card */
+.user-login-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 20%, var(--color-accent-muted) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.user-login-card {
+  position: relative;
+  z-index: 1;
+}
+
+/* Icon wrapper with accent ring */
+.user-login-icon-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-xl);
+  background: var(--color-accent-muted);
+  border: 1px solid var(--color-accent-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+  box-shadow: 0 0 0 6px var(--color-accent-bg);
+}
+
+/* Divider with centered text */
+.user-login-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-4);
+  color: var(--color-text-3);
+  font-size: var(--text-xs);
+}
+.user-login-divider::before,
+.user-login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border-light);
+}
+
+/* Invite-only / contact-me box */
+.user-login-contact-box {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.user-login-contact-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-accent-bg);
+  border: 1px solid var(--color-accent-border);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-login-contact-title {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-1);
+}
+
+.user-login-contact-sub {
+  font-size: var(--text-xs);
+  color: var(--color-text-3);
+  line-height: 1.5;
+}
+
+.user-login-contact-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: var(--fw-medium);
+  transition: opacity var(--transition-fast);
+}
+.user-login-contact-link:hover { opacity: 0.8; text-decoration: underline; }
+

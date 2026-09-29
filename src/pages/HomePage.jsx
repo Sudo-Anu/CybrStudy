@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSections, buildTree } from '../hooks/useSections';
 import { subscribeToAllFiles } from '../services/firebase';
+import NotificationBanner from '../components/ui/NotificationBanner';
 
 function SectionCard({ node }) {
   const childCount = countDescendants(node);
@@ -62,9 +63,11 @@ function SectionCard({ node }) {
   );
 }
 
-function countDescendants(node) {
-  let count = node.children?.length ?? 0;
-  node.children?.forEach((c) => { count += countDescendants(c); });
+function countDescendants(node, visited = new Set()) {
+  if (!node || !node.children || visited.has(node.id)) return 0;
+  visited.add(node.id);
+  let count = node.children.length;
+  node.children.forEach((c) => { count += countDescendants(c, visited); });
   return count;
 }
 
@@ -226,6 +229,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Notification Banner — shown between hero and Academic Sections */}
+      <NotificationBanner />
 
       {/* Sections Grid Section */}
       <section style={{ marginBottom: 'var(--space-12)' }}>

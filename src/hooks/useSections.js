@@ -36,17 +36,23 @@ export function buildTree(nodes) {
 
   const roots = [];
   nodes.forEach((n) => {
-    if (n.parentId && map[n.parentId]) {
+    if (n.parentId && map[n.parentId] && n.parentId !== n.id) {
       map[n.parentId].children.push(map[n.id]);
     } else {
       roots.push(map[n.id]);
     }
   });
 
-  // Sort each level by order
+  // Sort each level by order, protecting against cycles
+  const visited = new Set();
   const sortByOrder = (arr) => {
     arr.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    arr.forEach((n) => sortByOrder(n.children));
+    arr.forEach((n) => {
+      if (n && !visited.has(n.id)) {
+        visited.add(n.id);
+        sortByOrder(n.children);
+      }
+    });
     return arr;
   };
 

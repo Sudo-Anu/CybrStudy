@@ -13,8 +13,10 @@ import Modal from '../components/ui/Modal';
 // Recursive breadcrumb builder
 function buildBreadcrumbs(sectionId, sections) {
   const crumbs = [];
+  const visited = new Set();
   let current = sections.find((s) => s.id === sectionId);
-  while (current) {
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
     crumbs.unshift(current);
     current = current.parentId ? sections.find((s) => s.id === current.parentId) : null;
   }
@@ -75,14 +77,21 @@ function SubsectionCard({ node, sections }) {
   );
 }
 
-// Modal for renaming folder/section
+// Modal for renaming folder/section — only admins may rename
 function RenameFolderModal({ section, onClose }) {
   const [name, setName] = useState(section?.name || '');
   const [saving, setSaving] = useState(false);
   const { addToast } = useToast();
+  const { isAdmin } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Security: double-check admin status — never rely on UI visibility alone
+    if (!isAdmin) {
+      addToast('Permission denied: admin access required.', 'error');
+      onClose();
+      return;
+    }
     const trimmed = name.trim();
     if (!trimmed || trimmed === section.name) {
       onClose();
@@ -136,9 +145,8 @@ export default function BrowsePage() {
   const { sections, tree, loading: sectionsLoading } = useSections();
   const { files: sectionFiles, loading: sectionFilesLoading } = useFiles(sectionId ?? null);
   const { files: allFiles, loading: allFilesLoading } = useAllFiles();
-  const { user } = useAuth();
+  const { isAdmin } = useAuth();
   const { addToast } = useToast();
-  const isAdmin = !!user;
 
   // Search & filter states
   const [searchQuery, setSearchQuery] = useState(urlQuery);
@@ -162,8 +170,12 @@ export default function BrowsePage() {
     }
   };
 
-  // Admin delete file
+  // Admin delete file — isAdmin guard applied at logic level (not just UI)
   const handleDeleteFile = async (file) => {
+    if (!isAdmin) {
+      addToast('Permission denied: admin access required.', 'error');
+      return;
+    }
     if (!window.confirm(`Delete "${file.name}"? This will also remove it from Google Drive.`)) return;
     try {
       await deleteFromDrive(file.driveFileId).catch(() => {});

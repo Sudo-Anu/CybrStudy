@@ -1,22 +1,32 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthChange } from '../services/authService';
+import { onAuthChange, checkIsAdmin, registerUserProfile } from '../services/authService';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(undefined); // undefined = loading, null = logged out
+  const [user,    setUser]    = useState(undefined); // undefined = loading, null = logged out
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthChange((firebaseUser) => {
+    const unsubscribe = onAuthChange(async (firebaseUser) => {
       setUser(firebaseUser);
+      if (firebaseUser?.email) {
+        // Register/refresh user profile in Firestore so admin can see them
+        registerUserProfile(firebaseUser);
+        // Check Firestore admins collection for this email
+        const adminStatus = await checkIsAdmin(firebaseUser.email);
+        setIsAdmin(adminStatus);
+      } else {
+        setIsAdmin(false);
+      }
       setLoading(false);
     });
     return unsubscribe;
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );

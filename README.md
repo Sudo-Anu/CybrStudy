@@ -37,20 +37,47 @@ npm install
 
 ### 3. Configure Firestore Security Rules
 
-Go to Firestore → Rules and paste:
+Go to **Firestore → Rules** and paste the following. These rules cover all collections used by CybrStudy:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Anyone can read sections and files (public content)
-    match /sections/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+
+    // Helper: check if the signed-in user is in the admins collection
+    function isAdmin() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
     }
+
+    // Sections — any authenticated user can read; only admins can write
+    match /sections/{document=**} {
+      allow read:  if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Files — any authenticated user can read; only admins can write
     match /files/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read:  if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Notifications — any authenticated user can read; only admins can write
+    match /notifications/{document=**} {
+      allow read:  if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Users — only authenticated users can read their own doc; admins can read all
+    match /users/{uid} {
+      allow read:  if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow write: if request.auth != null && (request.auth.uid == uid || isAdmin());
+    }
+
+    // Admins — only admins can read or write
+    match /admins/{email} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
     }
   }
 }

@@ -13,7 +13,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -80,7 +79,10 @@ export function subscribeToSections(callback) {
       .map((d) => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     callback(sections);
-  }, (err) => console.error('[CybrStudy] subscribeToSections error:', err));
+  }, (err) => {
+    console.error('[CybrStudy] subscribeToSections error:', err);
+    callback([]);
+  });
 }
 
 /** Listen to files within a specific section */
@@ -97,7 +99,10 @@ export function subscribeToFiles(sectionId, callback) {
         return ta - tb;
       });
     callback(files);
-  }, (err) => console.error('[CybrStudy] subscribeToFiles error:', err));
+  }, (err) => {
+    console.error('[CybrStudy] subscribeToFiles error:', err);
+    callback([]);
+  });
 }
 
 /** Get all files (for stats overview) */

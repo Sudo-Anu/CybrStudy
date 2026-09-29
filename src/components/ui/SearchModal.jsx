@@ -29,8 +29,10 @@ function HighlightMatch({ text, query }) {
 // Build breadcrumb string for a section
 function getSectionBreadcrumb(sectionId, sections) {
   const parts = [];
+  const visited = new Set();
   let curr = sections.find((s) => s.id === sectionId);
-  while (curr) {
+  while (curr && !visited.has(curr.id)) {
+    visited.add(curr.id);
     parts.unshift(curr.name);
     curr = curr.parentId ? sections.find((s) => s.id === curr.parentId) : null;
   }
@@ -47,7 +49,7 @@ export default function SearchModal({ isOpen, onClose, initialQuery = '' }) {
   const navigate = useNavigate();
 
   const { sections } = useSections();
-  const { files: allFiles, loading: filesLoading } = useAllFiles();
+  const { files: allFiles } = useAllFiles();
 
   // Reset or focus when opened
   useEffect(() => {
@@ -284,7 +286,7 @@ export default function SearchModal({ isOpen, onClose, initialQuery = '' }) {
                       Folders ({matchingSections.length})
                     </div>
                     {matchingSections.map((sec, idx) => {
-                      const isSelected = activeTab === 'sections' ? selectedIndex === idx : selectedIndex === idx;
+                      const isSelected = selectedIndex === idx;
                       return (
                         <div
                           key={sec.id}
@@ -371,7 +373,7 @@ export default function SearchModal({ isOpen, onClose, initialQuery = '' }) {
                               Preview
                             </button>
                             <a
-                              href={file.driveDownloadUrl}
+                              href={file.driveDownloadUrl || (file.driveFileId ? `https://drive.google.com/uc?export=download&id=${file.driveFileId}` : '#')}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="btn btn-secondary btn-sm"

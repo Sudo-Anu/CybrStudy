@@ -12,7 +12,7 @@ const NAV_LINKS = [
 
 export default function Header({ onMenuClick, isMobileMenuOpen }) {
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const { isAdmin } = useAuth();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   // Global Ctrl+K / Cmd+K / / shortcut
@@ -162,7 +162,7 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
                 </Link>
               ))}
 
-              {user && (
+              {isAdmin && (
                 <Link
                   to={`${ADMIN_BASE}/dashboard`}
                   style={{

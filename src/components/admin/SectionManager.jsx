@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   createSection,
   renameSection,
@@ -7,15 +7,18 @@ import {
 import { useToast } from '../../context/ToastContext';
 import Modal from '../ui/Modal';
 
+
 // ---- Recursive Node Component ----
-function SectionNode({ node, depth = 0, onSelectSection, selectedSectionId }) {
-  const [isOpen,   setIsOpen]   = useState(depth === 0);
+// Expansion state is owned by the parent (SectionManager) via expandedIds + onToggle
+function SectionNode({ node, depth = 0, onSelectSection, selectedSectionId, expandedIds, onToggle }) {
+  const hasChildren = Boolean(node.children && node.children.length > 0);
+  const isOpen      = expandedIds.has(node.id);
+  const isSelected  = selectedSectionId === node.id;
+
   const [editing,  setEditing]  = useState(false);
   const [editName, setEditName] = useState(node.name);
   const [loading,  setLoading]  = useState(false);
   const { addToast } = useToast();
-
-  const isSelected = selectedSectionId === node.id;
 
   const handleRename = async (e) => {
     e.preventDefault();
@@ -40,6 +43,7 @@ function SectionNode({ node, depth = 0, onSelectSection, selectedSectionId }) {
       addToast(`"${node.name}" deleted.`, 'success');
     } catch (err) {
       addToast('Delete failed: ' + err.message, 'error');
+    } finally {
       setLoading(false);
     }
   };
@@ -49,7 +53,7 @@ function SectionNode({ node, depth = 0, onSelectSection, selectedSectionId }) {
     if (!name?.trim()) return;
     try {
       await createSection(name.trim(), node.id, node.children?.length ?? 0);
-      setIsOpen(true);
+      // Parent will auto-expand once Firestore updates the tree
       addToast(`"${name}" created.`, 'success');
     } catch (err) {
       addToast('Failed to create: ' + err.message, 'error');
@@ -67,7 +71,7 @@ function SectionNode({ node, depth = 0, onSelectSection, selectedSectionId }) {
         <div className="section-node-header">
           {/* Expand/Collapse toggle */}
           <button
-            onClick={() => setIsOpen((v) => !v)}
+            onClick={() => onToggle(node.id)}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               color: 'var(--color-text-3)', padding: 2, flexShrink: 0,
@@ -125,7 +129,7 @@ function SectionNode({ node, depth = 0, onSelectSection, selectedSectionId }) {
           ) : (
             <button
               className="section-node-name"
-              onClick={() => { onSelectSection(node.id); setIsOpen(true); }}
+              onClick={() => { onSelectSection(node.id); onToggle(node.id); }}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
                 color: isSelected ? 'var(--color-accent)' : 'var(--color-text)',
@@ -177,16 +181,18 @@ function SectionNode({ node, depth = 0, onSelectSection, selectedSectionId }) {
         </div>
 
         {/* Children (recursive) */}
-        {isOpen && node.children && node.children.length > 0 && (
+        {isOpen && hasChildren && (
           <div className="section-node-children">
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
               {node.children.map((child) => (
                 <SectionNode
                   key={child.id}
                   node={child}
-                  depth={0} // children reset indent since we use marginLeft on parent
+                  depth={depth + 1}
                   onSelectSection={onSelectSection}
                   selectedSectionId={selectedSectionId}
+                  expandedIds={expandedIds}
+                  onToggle={onToggle}
                 />
               ))}
             </ul>
@@ -203,6 +209,19 @@ export default function SectionManager({ tree, onSelectSection, selectedSectionI
   const [newName,     setNewName]     = useState('');
   const [creating,    setCreating]    = useState(false);
   const { addToast } = useToast();
+
+  // expandedIds lives here — survives tree re-renders completely.
+  // Starts empty — user opens what they need.
+  const [expandedIds, setExpandedIds] = useState(() => new Set());
+
+  const handleToggle = useCallback((id) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const handleAddRoot = async (e) => {
     e.preventDefault();
@@ -250,6 +269,8 @@ export default function SectionManager({ tree, onSelectSection, selectedSectionI
               depth={0}
               onSelectSection={onSelectSection}
               selectedSectionId={selectedSectionId}
+              expandedIds={expandedIds}
+              onToggle={handleToggle}
             />
           ))}
         </ul>

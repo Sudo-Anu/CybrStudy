@@ -1,31 +1,39 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loginAdmin } from '../services/authService';
+import { loginAdmin, checkIsAdmin, logoutAdmin } from '../services/authService';
 import { ADMIN_BASE } from '../utils/constants';
 
 export default function AdminLoginPage() {
-  const { user } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
   const navigate = useNavigate();
 
+  // Already signed in as admin → go straight to dashboard (wait for auth to resolve first)
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user && isAdmin) {
       navigate(`${ADMIN_BASE}/dashboard`, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, isAdmin, authLoading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await loginAdmin(email, password);
+      const credential = await loginAdmin(email, password);
+      const adminOk = await checkIsAdmin(credential.user.email);
+      if (!adminOk) {
+        // Not an admin — sign them back out and show an error
+        await logoutAdmin();
+        setError('This account does not have admin access.');
+        return;
+      }
       navigate(`${ADMIN_BASE}/dashboard`);
-    } catch (err) {
+    } catch {
       setError('Invalid credentials. Please try again.');
     } finally {
       setLoading(false);

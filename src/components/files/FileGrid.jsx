@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import MediaPreview from './MediaPreview';
 import Modal from '../ui/Modal';
 import { renameFile } from '../../services/firebase';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { formatBytes, timeAgo } from '../../utils/helpers';
 
@@ -43,14 +44,21 @@ const IconTrash = () => (
   </svg>
 );
 
-// ---- Rename Modal ----
+// ---- Rename Modal — only admins may rename files ----
 function RenameModal({ file, onClose }) {
   const [name, setName] = useState(file.name);
   const [saving, setSaving] = useState(false);
   const { addToast } = useToast();
+  const { isAdmin } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Security: double-check admin status — never rely on UI visibility alone
+    if (!isAdmin) {
+      addToast('Permission denied: admin access required.', 'error');
+      onClose();
+      return;
+    }
     const trimmed = name.trim();
     if (!trimmed || trimmed === file.name) { onClose(); return; }
     setSaving(true);
@@ -161,7 +169,7 @@ function FileCardGrid({ file, onDelete, isAdmin }) {
             <IconEye /> Preview
           </button>
           <a
-            href={file.driveDownloadUrl}
+            href={file.driveDownloadUrl || (file.driveFileId ? `https://drive.google.com/uc?export=download&id=${file.driveFileId}` : '#')}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-primary btn-sm"
@@ -203,7 +211,7 @@ function FileRowList({ file, onDelete, isAdmin }) {
           <button className="btn btn-secondary btn-sm" onClick={() => setShowPreview(true)} aria-label={`Preview ${file.name}`} id={`preview-btn-${file.id}`}>
             <IconEye /> <span>Preview</span>
           </button>
-          <a href={file.driveDownloadUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm" aria-label={`Download ${file.name}`} id={`download-btn-${file.id}`}>
+          <a href={file.driveDownloadUrl || (file.driveFileId ? `https://drive.google.com/uc?export=download&id=${file.driveFileId}` : '#')} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm" aria-label={`Download ${file.name}`} id={`download-list-btn-${file.id}`}>
             <IconDownload /> <span>Download</span>
           </a>
           {isAdmin && (

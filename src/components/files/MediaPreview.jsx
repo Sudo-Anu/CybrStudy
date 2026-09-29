@@ -33,21 +33,23 @@ export default function MediaPreview({ file, onClose }) {
 
   if (!file) return null;
 
-  const embedUrl = getDriveEmbedUrl(file.driveFileId);
-  const downloadUrl = file.driveDownloadUrl || `https://drive.google.com/uc?export=download&id=${file.driveFileId}`;
-  const driveViewUrl = `https://drive.google.com/file/d/${file.driveFileId}/view`;
+  const fileId = file.driveFileId || '';
+  const embedUrl = getDriveEmbedUrl(fileId);
+  const downloadUrl = file.driveDownloadUrl || (fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : '#');
+  const driveViewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/view` : '#';
 
   // High-res image sources with cascading fallbacks
-  const imageSources = [
-    `https://drive.google.com/thumbnail?id=${file.driveFileId}&sz=w2500`,
-    `https://lh3.googleusercontent.com/d/${file.driveFileId}`,
-    `https://drive.google.com/uc?export=view&id=${file.driveFileId}`,
-  ];
+  const imageSources = fileId ? [
+    `https://drive.google.com/thumbnail?id=${fileId}&sz=w2500`,
+    `https://lh3.googleusercontent.com/d/${fileId}`,
+    `https://drive.google.com/uc?export=view&id=${fileId}`,
+  ] : [];
 
-  const currentImgSrc = imageSources[imgSrcIdx] || imageSources[0];
+  const currentImgSrc = imageSources[imgSrcIdx] || imageSources[0] || '';
 
   const handleImageError = () => {
     if (imgSrcIdx < imageSources.length - 1) {
+      setImgLoading(true);
       setImgSrcIdx((i) => i + 1);
     } else {
       setImgFailed(true);
@@ -161,8 +163,8 @@ export default function MediaPreview({ file, onClose }) {
           className="preview-content-wrapper"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* PDF Preview: Edge-to-edge on mobile, perfectly constrained on desktop */}
-          {isPdf && (
+          {/* PDF or other doc Preview: Edge-to-edge on mobile, perfectly constrained on desktop */}
+          {!isImage && (
             <iframe
               src={embedUrl}
               className="preview-pdf-frame"

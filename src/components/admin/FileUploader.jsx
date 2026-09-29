@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadToDrive, deleteFromDrive } from '../../services/driveService';
 import { addFileRecord, deleteFileRecord, renameSection } from '../../services/firebase';
 import { useToast } from '../../context/ToastContext';
-import { getFileType, formatBytes } from '../../utils/helpers';
+import { getFileType } from '../../utils/helpers';
 import FileGrid from '../files/FileGrid';
 import { useFiles } from '../../hooks/useFiles';
 
@@ -193,7 +193,12 @@ export default function FileUploader({ sectionId, sectionName }) {
           multiple
           accept={ACCEPTED_TYPES}
           style={{ display: 'none' }}
-          onChange={(e) => handleFiles(e.target.files)}
+          onChange={(e) => {
+            if (e.target.files?.length) {
+              handleFiles(e.target.files);
+            }
+            e.target.value = '';
+          }}
           id="file-input"
         />
 
