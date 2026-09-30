@@ -29,9 +29,33 @@ function getBreadcrumbText(sectionId, sections) {
   return crumbs.map((c) => c.name).join(' › ') || 'Root';
 }
 
-// Subsection card with optional path display
-function SubsectionCard({ node, sections }) {
+// Recursively find all descendant section IDs (including self)
+function getDescendantIds(sectionId, sections = []) {
+  const ids = [sectionId];
+  const children = sections.filter((s) => s.parentId === sectionId && s.id !== sectionId);
+  for (const child of children) {
+    ids.push(...getDescendantIds(child.id, sections));
+  }
+  return ids;
+}
+
+// Get total count of study materials for a section and all its nested subfolders
+function countFilesForSection(sectionId, sections = [], allFiles = []) {
+  if (!sectionId || !Array.isArray(allFiles) || allFiles.length === 0) return 0;
+  const descendantIds = new Set(getDescendantIds(sectionId, sections));
+  return allFiles.filter((f) => descendantIds.has(f.sectionId)).length;
+}
+
+// Subsection card with material count and optional path display
+function SubsectionCard({ node, sections, allFiles = [] }) {
   const path = sections ? getBreadcrumbText(node.id, sections) : null;
+  const directChildren = (sections || []).filter((s) => s.parentId === node.id);
+  const subfolderCount = node.children?.length ?? directChildren.length;
+  const fileCount = countFilesForSection(node.id, sections || [], allFiles || []);
+
+  const matText = `${fileCount} material${fileCount !== 1 ? 's' : ''}`;
+  const subText = subfolderCount > 0 ? ` · ${subfolderCount} subfolder${subfolderCount !== 1 ? 's' : ''}` : '';
+  const label = path ? path : `${matText}${subText}`;
 
   return (
     <Link
@@ -40,7 +64,7 @@ function SubsectionCard({ node, sections }) {
         display: 'flex',
         alignItems: 'center',
         gap: 'var(--space-3)',
-        padding: 'var(--space-4)',
+        padding: 'var(--space-3) var(--space-4)',
         background: 'var(--color-surface)',
         border: '1px solid var(--color-border)',
         borderRadius: 'var(--radius-lg)',
@@ -63,14 +87,29 @@ function SubsectionCard({ node, sections }) {
         </svg>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: 500, fontSize: 'var(--text-sm)', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontWeight: 500, fontSize: 'var(--text-sm)', color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
           {node.name}
         </p>
-        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {path ? path : `${node.children?.length ?? 0} subfolder${node.children?.length !== 1 ? 's' : ''}`}
+        <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: '2px 0 0' }}>
+          {label}
         </p>
       </div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round">
+      <span
+        style={{
+          fontSize: 'var(--text-xs)',
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+          padding: '2px 8px',
+          borderRadius: 'var(--radius-full)',
+          background: fileCount > 0 ? 'var(--color-accent-bg)' : 'var(--color-bg-alt)',
+          color: fileCount > 0 ? 'var(--color-accent)' : 'var(--color-text-3)',
+          border: `1px solid ${fileCount > 0 ? 'var(--color-accent-border)' : 'var(--color-border-light)'}`,
+        }}
+      >
+        {fileCount} {fileCount === 1 ? 'material' : 'materials'}
+      </span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
         <polyline points="9 18 15 12 9 6"/>
       </svg>
     </Link>
@@ -461,7 +500,7 @@ export default function BrowsePage() {
                     </h2>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-3)' }}>
                       {matchingSections.map((sec) => (
-                        <SubsectionCard key={sec.id} node={sec} sections={sections} />
+                        <SubsectionCard key={sec.id} node={sec} sections={sections} allFiles={allFiles} />
                       ))}
                     </div>
                   </div>
@@ -618,7 +657,9 @@ export default function BrowsePage() {
             Subsections {children.length > 0 && `(${children.length})`}
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-3)' }}>
-            {filteredChildren.map((child) => <SubsectionCard key={child.id} node={child} />)}
+            {filteredChildren.map((child) => (
+              <SubsectionCard key={child.id} node={child} sections={sections} allFiles={allFiles} />
+            ))}
           </div>
           <div className="divider" style={{ marginBlock: 'var(--space-6)' }} />
         </div>

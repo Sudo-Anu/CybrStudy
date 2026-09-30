@@ -4,8 +4,27 @@ import { useSections, buildTree } from '../hooks/useSections';
 import { subscribeToAllFiles } from '../services/firebase';
 import NotificationBanner from '../components/ui/NotificationBanner';
 
-function SectionCard({ node }) {
+// Recursively find all descendant section IDs (including self)
+function getDescendantIds(sectionId, sections = []) {
+  const ids = [sectionId];
+  const children = sections.filter((s) => s.parentId === sectionId && s.id !== sectionId);
+  for (const child of children) {
+    ids.push(...getDescendantIds(child.id, sections));
+  }
+  return ids;
+}
+
+// Get total count of study materials for a section and all its nested subfolders
+function countFilesForSection(sectionId, sections = [], allFiles = []) {
+  if (!sectionId || !Array.isArray(allFiles) || allFiles.length === 0) return 0;
+  const descendantIds = new Set(getDescendantIds(sectionId, sections));
+  return allFiles.filter((f) => descendantIds.has(f.sectionId)).length;
+}
+
+function SectionCard({ node, sections = [], allFiles = [] }) {
   const childCount = countDescendants(node);
+  const fileCount = countFilesForSection(node.id, sections, allFiles);
+
   return (
     <Link
       to={`/browse/${node.id}`}
@@ -39,8 +58,16 @@ function SectionCard({ node }) {
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
           </svg>
         </div>
-        <span className="badge badge-accent" style={{ fontSize: 'var(--text-xs)' }}>
-          {node.children?.length ?? 0} {node.children?.length === 1 ? 'subfolder' : 'subfolders'}
+        <span
+          className="badge"
+          style={{
+            fontSize: 'var(--text-xs)',
+            background: fileCount > 0 ? 'var(--color-accent-bg)' : 'var(--color-bg-alt)',
+            color: fileCount > 0 ? 'var(--color-accent)' : 'var(--color-text-3)',
+            border: `1px solid ${fileCount > 0 ? 'var(--color-accent-border)' : 'var(--color-border-light)'}`,
+          }}
+        >
+          {fileCount} {fileCount === 1 ? 'material' : 'materials'}
         </span>
       </div>
 
@@ -49,7 +76,7 @@ function SectionCard({ node }) {
           {node.name}
         </h3>
         <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', lineHeight: 1.5 }}>
-          {childCount > 0 ? `${childCount} nested folder${childCount !== 1 ? 's' : ''}` : 'Direct study collection'}
+          {childCount > 0 ? `${childCount} subfolder${childCount !== 1 ? 's' : ''}` : 'Direct study collection'}
         </p>
       </div>
 
@@ -74,13 +101,15 @@ function countDescendants(node, visited = new Set()) {
 export default function HomePage() {
   const { sections, loading: sectionsLoading } = useSections();
   const tree = buildTree(sections);
+  const [allFiles, setAllFiles] = useState([]);
   const [totalFiles, setTotalFiles] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     const unsub = subscribeToAllFiles((files) => {
-      setTotalFiles(files.length);
+      setAllFiles(files || []);
+      setTotalFiles(files?.length ?? 0);
     });
     return unsub;
   }, []);
@@ -277,7 +306,9 @@ export default function HomePage() {
             style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-4)' }}
             className="animate-fade-in"
           >
-            {tree.map((node) => <SectionCard key={node.id} node={node} />)}
+            {tree.map((node) => (
+              <SectionCard key={node.id} node={node} sections={sections} allFiles={allFiles} />
+            ))}
           </div>
         )}
       </section>
