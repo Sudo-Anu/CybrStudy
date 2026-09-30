@@ -320,6 +320,12 @@ export default function NotificationBanner() {
           transform: translateY(-1px);
           box-shadow: 0 4px 24px rgba(0,0,0,0.08) !important;
         }
+        @media (max-width: 640px) {
+          .notif-card {
+            padding: var(--space-3) var(--space-3) !important;
+            gap: var(--space-3) !important;
+          }
+        }
       `}</style>
     </section>
   );

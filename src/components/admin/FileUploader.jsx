@@ -449,7 +449,7 @@ export default function FileUploader({ sectionId, sectionName }) {
               <label className="form-label" htmlFor="drive-link-input">
                 Google Drive Share Link or File ID <span style={{ color: 'var(--color-error)' }}>*</span>
               </label>
-              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                 <input
                   id="drive-link-input"
                   className="input-field"
@@ -458,6 +458,7 @@ export default function FileUploader({ sectionId, sectionName }) {
                   onChange={(e) => setLinkInput(e.target.value)}
                   required
                   autoFocus
+                  style={{ flex: '1 1 200px', minWidth: 0 }}
                 />
                 <button
                   type="button"
@@ -465,7 +466,7 @@ export default function FileUploader({ sectionId, sectionName }) {
                   onClick={handleFetchInfo}
                   disabled={fetchingInfo || !cleanExtractedId}
                   title="Auto-fill name & size from Drive"
-                  style={{ whiteSpace: 'nowrap' }}
+                  style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                 >
                   {fetchingInfo ? (
                     <>

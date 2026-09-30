@@ -156,7 +156,7 @@ export default function TargetSectionSelector({
       {/* Main Selector & Search Row */}
       <div className="target-section-controls-row">
         {/* Hierarchical Dropdown */}
-        <div style={{ flex: '1 1 320px', minWidth: '260px' }}>
+        <div className="target-section-select-col" style={{ flex: '1 1 320px', minWidth: 0 }}>
           <label htmlFor="section-picker-select" className="target-section-label">
             Select Folder Hierarchy:
           </label>
@@ -185,7 +185,7 @@ export default function TargetSectionSelector({
         </div>
 
         {/* Quick Filter Input */}
-        <div style={{ flex: '0 1 240px', minWidth: '180px' }}>
+        <div className="target-section-search-col" style={{ flex: '0 1 240px', minWidth: 0 }}>
           <label htmlFor="target-section-search-input" className="target-section-label">
             Filter Folders:
           </label>

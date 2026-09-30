@@ -60,13 +60,11 @@ function SectionNode({ node, depth = 0, onSelectSection, selectedSectionId, expa
     }
   };
 
-  const indentPx = depth * 20;
-
   return (
     <li style={{ listStyle: 'none' }}>
       <div
         className="section-node"
-        style={{ marginLeft: indentPx, borderColor: isSelected ? 'var(--color-accent)' : undefined }}
+        style={{ '--depth': depth, borderColor: isSelected ? 'var(--color-accent)' : undefined }}
       >
         <div className="section-node-header">
           {/* Expand/Collapse toggle */}

@@ -312,8 +312,8 @@ export default function BrowsePage() {
           flexDirection: 'column',
           gap: 'var(--space-3)',
         }}>
-          <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ flex: '1 1 280px' }}>
+          <div className="browse-toolbar-controls" style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ flex: '1 1 280px', minWidth: 0 }}>
               <div className="search-bar">
                 <svg className="search-bar-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                   <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -343,15 +343,15 @@ export default function BrowsePage() {
             </div>
 
             {isSearching && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', fontWeight: 500 }}>
+              <div className="browse-toolbar-subcontrols" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', fontWeight: 500, flexShrink: 0 }}>
                   Sort:
                 </span>
                 <select
                   className="input-field"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  style={{ fontSize: 'var(--text-xs)', padding: '6px 10px', height: 36, minWidth: 140 }}
+                  style={{ fontSize: 'var(--text-xs)', padding: '6px 10px', height: 36, minWidth: 120 }}
                   id="browse-root-sort-select"
                 >
                   <option value="newest">Newest first</option>
@@ -444,7 +444,7 @@ export default function BrowsePage() {
                 <p style={{ fontSize: 'var(--text-sm)' }}>Content will appear here once uploaded by the admin.</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-4)' }}>
+              <div className="subsections-grid">
                 {tree.map((node) => (
                   <SubsectionCard key={node.id} node={node} sections={sections} allFiles={allFiles} />
                 ))}
@@ -479,7 +479,7 @@ export default function BrowsePage() {
                     <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-lg)', marginBottom: 'var(--space-4)', color: 'var(--color-text-2)' }}>
                       Matching Folders ({matchingSections.length})
                     </h2>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-3)' }}>
+                    <div className="subsections-grid">
                       {matchingSections.map((sec) => (
                         <SubsectionCard key={sec.id} node={sec} showPath={true} sections={sections} allFiles={allFiles} />
                       ))}
@@ -539,15 +539,15 @@ export default function BrowsePage() {
   return (
     <div className="animate-fade-in">
       {/* Breadcrumbs */}
-      <nav aria-label="Breadcrumb" style={{ marginBottom: 'var(--space-6)' }}>
-        <ol style={{ listStyle: 'none', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-1)', padding: 0 }}>
+      <nav aria-label="Breadcrumb" className="breadcrumb-nav">
+        <ol className="breadcrumb-list">
           <li>
             <Link to="/browse" style={{ fontSize: 'var(--text-sm)', color: 'var(--color-accent)', textDecoration: 'none' }}>
               Browse
             </Link>
           </li>
           {breadcrumbs.map((crumb, i) => (
-            <li key={crumb.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+            <li key={crumb.id}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-3)" strokeWidth="2">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
@@ -566,9 +566,9 @@ export default function BrowsePage() {
       </nav>
 
       {/* Page header with Admin Rename folder action */}
-      <div style={{ marginBottom: 'var(--space-6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+      <div className="browse-header-row" style={{ marginBottom: 'var(--space-6)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
             <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-3xl)', color: 'var(--color-text)', margin: 0 }}>
               {currentSection.name}
             </h1>
@@ -637,7 +637,7 @@ export default function BrowsePage() {
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'var(--text-lg)', marginBottom: 'var(--space-3)', color: 'var(--color-text-2)' }}>
             Subsections {children.length > 0 && `(${children.length})`}
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 'var(--space-3)' }}>
+          <div className="subsections-grid">
             {filteredChildren.map((child) => (
               <SubsectionCard key={child.id} node={child} sections={sections} allFiles={allFiles} />
             ))}
@@ -660,9 +660,9 @@ export default function BrowsePage() {
           gap: 'var(--space-3)',
         }}
       >
-        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="browse-toolbar-controls" style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
           {/* Search box */}
-          <div style={{ flex: '1 1 260px' }}>
+          <div style={{ flex: '1 1 260px', minWidth: 0 }}>
             <div className="search-bar">
               <svg className="search-bar-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -691,44 +691,46 @@ export default function BrowsePage() {
             </div>
           </div>
 
-          {/* Scope Selector: This Section vs All Sections */}
-          <div className="scope-switch" role="group" aria-label="Search scope">
-            <button
-              type="button"
-              className={`scope-switch-btn${searchScope === 'section' ? ' scope-switch-btn--active' : ''}`}
-              onClick={() => setSearchScope('section')}
-              title="Search only this folder"
-            >
-              This folder
-            </button>
-            <button
-              type="button"
-              className={`scope-switch-btn${searchScope === 'all' ? ' scope-switch-btn--active' : ''}`}
-              onClick={() => setSearchScope('all')}
-              title="Search across all academic folders"
-            >
-              All folders
-            </button>
-          </div>
+          <div className="browse-toolbar-subcontrols" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            {/* Scope Selector: This Section vs All Sections */}
+            <div className="scope-switch" role="group" aria-label="Search scope">
+              <button
+                type="button"
+                className={`scope-switch-btn${searchScope === 'section' ? ' scope-switch-btn--active' : ''}`}
+                onClick={() => setSearchScope('section')}
+                title="Search only this folder"
+              >
+                This folder
+              </button>
+              <button
+                type="button"
+                className={`scope-switch-btn${searchScope === 'all' ? ' scope-switch-btn--active' : ''}`}
+                onClick={() => setSearchScope('all')}
+                title="Search across all academic folders"
+              >
+                All folders
+              </button>
+            </div>
 
-          {/* Sort dropdown */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', fontWeight: 500 }}>
-              Sort:
-            </span>
-            <select
-              className="input-field"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              style={{ fontSize: 'var(--text-xs)', padding: '6px 10px', height: 36, minWidth: 130 }}
-              id="file-sort-select"
-            >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="name_asc">Name (A–Z)</option>
-              <option value="name_desc">Name (Z–A)</option>
-              <option value="size_desc">Size (Largest)</option>
-            </select>
+            {/* Sort dropdown */}
+            <div className="sort-group" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexShrink: 0 }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', fontWeight: 500 }}>
+                Sort:
+              </span>
+              <select
+                className="input-field"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                style={{ fontSize: 'var(--text-xs)', padding: '6px 10px', height: 36, minWidth: 120 }}
+                id="file-sort-select"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="name_asc">Name (A–Z)</option>
+                <option value="name_desc">Name (Z–A)</option>
+                <option value="size_desc">Size (Largest)</option>
+              </select>
+            </div>
           </div>
         </div>
 

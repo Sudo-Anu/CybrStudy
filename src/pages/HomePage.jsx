@@ -98,6 +98,7 @@ export default function HomePage() {
     <div className="animate-fade-in">
       {/* Hero Section */}
       <section
+        className="hero-section"
         style={{
           background: 'linear-gradient(135deg, var(--color-bg-alt) 0%, var(--color-accent-bg) 100%)',
           borderRadius: 'var(--radius-2xl)',
@@ -257,7 +258,7 @@ export default function HomePage() {
         </div>
 
         {sectionsLoading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-4)' }}>
+          <div className="sections-card-grid">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="skeleton" style={{ height: 160, borderRadius: 'var(--radius-xl)' }} />
             ))}
@@ -273,10 +274,7 @@ export default function HomePage() {
             <p style={{ fontSize: 'var(--text-sm)' }}>Sections will appear here once the administrator adds them.</p>
           </div>
         ) : (
-          <div
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-4)' }}
-            className="animate-fade-in"
-          >
+          <div className="sections-card-grid animate-fade-in">
             {tree.map((node) => <SectionCard key={node.id} node={node} />)}
           </div>
         )}
@@ -284,6 +282,7 @@ export default function HomePage() {
 
       {/* Feature Strip */}
       <section
+        className="feature-strip"
         style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',

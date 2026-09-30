@@ -38,6 +38,7 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
   return (
     <>
       <header
+        className="site-header"
         style={{
           position: 'sticky',
           top: 0,
@@ -49,7 +50,6 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
           borderBottom: '1px solid var(--color-border)',
           display: 'flex',
           alignItems: 'center',
-          padding: '0 var(--space-6)',
           transition: 'background-color var(--transition-base), border-color var(--transition-base)',
         }}
       >
