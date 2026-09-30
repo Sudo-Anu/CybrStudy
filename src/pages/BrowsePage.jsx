@@ -445,7 +445,9 @@ export default function BrowsePage() {
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 'var(--space-4)' }}>
-                {tree.map((node) => <SubsectionCard key={node.id} node={node} />)}
+                {tree.map((node) => (
+                  <SubsectionCard key={node.id} node={node} sections={sections} allFiles={allFiles} />
+                ))}
               </div>
             )}
           </div>
@@ -588,7 +590,7 @@ export default function BrowsePage() {
             )}
           </div>
           <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-3)', marginTop: 'var(--space-1)' }}>
-            {sectionFiles.length} material{sectionFiles.length !== 1 ? 's' : ''} {children.length > 0 ? `· ${children.length} subfolder${children.length !== 1 ? 's' : ''}` : ''}
+            {countMaterialsForSection(sectionId, sections, allFiles)} material{countMaterialsForSection(sectionId, sections, allFiles) !== 1 ? 's' : ''} {children.length > 0 ? `· ${children.length} subfolder${children.length !== 1 ? 's' : ''}` : ''}
           </p>
         </div>
 
