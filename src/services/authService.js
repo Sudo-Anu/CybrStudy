@@ -8,23 +8,71 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
+// ---- Device Session Tracking (Single Device Enforcement) --------
+const SESSION_KEY = 'cybrstudy_session_id';
+
+/** Get current session ID from localStorage */
+export function getCurrentSessionId() {
+  try {
+    return localStorage.getItem(SESSION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** Generate and save a new random session ID */
+export function createNewSessionId() {
+  const sid = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    localStorage.setItem(SESSION_KEY, sid);
+  } catch (err) {
+    console.warn('[CybrStudy] localStorage access failed:', err);
+  }
+  return sid;
+}
+
+/** Ensure a session ID exists locally */
+export function getOrCreateSessionId() {
+  let sid = getCurrentSessionId();
+  if (!sid) {
+    sid = createNewSessionId();
+  }
+  return sid;
+}
+
+/** Clear local session ID */
+export function clearSessionId() {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch {}
+}
+
 // ---- Auth -------------------------------------------------------
 
 /** Sign in the admin user */
 export async function loginAdmin(email, password) {
-  return signInWithEmailAndPassword(auth, email, password);
+  const newSid = createNewSessionId();
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  await registerUserProfile(credential.user, newSid);
+  return credential;
 }
 
 /**
  * Sign in a regular user.
- * Same Firebase Auth, distinction is the redirect destination.
+ * Generates a fresh device session ID to kick any older active sessions.
  */
 export async function loginUser(email, password) {
-  return signInWithEmailAndPassword(auth, email, password);
+  const newSid = createNewSessionId();
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  await registerUserProfile(credential.user, newSid);
+  return credential;
 }
 
 /** Sign out (shared for admin and regular users) */
 export async function logoutAdmin() {
+  clearSessionId();
   return signOut(auth);
 }
 export const logoutUser = logoutAdmin;
@@ -57,18 +105,24 @@ export async function checkIsAdmin(email) {
  * Upsert the signed-in user's profile into the `users` collection.
  * Called from AuthContext after every successful sign-in.
  * Document ID = uid (stable, even if email changes).
+ * If explicitSessionId is provided, currentSessionId is updated.
  */
-export async function registerUserProfile(firebaseUser) {
+export async function registerUserProfile(firebaseUser, explicitSessionId = null) {
   if (!firebaseUser) return;
   try {
+    const updateData = {
+      uid:         firebaseUser.uid,
+      email:       firebaseUser.email?.toLowerCase().trim() || '',
+      displayName: firebaseUser.displayName || '',
+      lastSeen:    serverTimestamp(),
+    };
+    if (explicitSessionId) {
+      updateData.currentSessionId = explicitSessionId;
+      updateData.sessionUpdatedAt = serverTimestamp();
+    }
     await setDoc(
       doc(db, 'users', firebaseUser.uid),
-      {
-        uid:         firebaseUser.uid,
-        email:       firebaseUser.email?.toLowerCase().trim() || '',
-        displayName: firebaseUser.displayName || '',
-        lastSeen:    serverTimestamp(),
-      },
+      updateData,
       { merge: true }   // merge so we don't overwrite createdAt on re-login
     );
   } catch (err) {

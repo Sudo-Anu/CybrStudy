@@ -8,7 +8,16 @@ export default function AdminLoginPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
-  const [error,    setError]    = useState('');
+  const [error,    setError]    = useState(() => {
+    try {
+      const reason = sessionStorage.getItem('cybrstudy_kicked_reason');
+      if (reason === 'another_device') {
+        sessionStorage.removeItem('cybrstudy_kicked_reason');
+        return 'You were signed out because your account was logged in from another device.';
+      }
+    } catch {}
+    return '';
+  });
   const [loading,  setLoading]  = useState(false);
   const navigate = useNavigate();
 
