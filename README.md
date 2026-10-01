@@ -215,3 +215,8 @@ CybrStudy/
 ├── vite.config.js
 └── README.md
 ```
+
+
+System Architecture -
+<img width="10951" height="9492" alt="diagram(2)" src="https://github.com/user-attachments/assets/b6d0531b-14ed-486b-8e5f-9085bfbcec2d" />
+
