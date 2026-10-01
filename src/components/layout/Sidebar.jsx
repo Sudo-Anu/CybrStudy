@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { buildTree } from '../../hooks/useSections';
+import { useAllFiles } from '../../hooks/useFiles';
 import { useAuth } from '../../context/AuthContext';
 import { ADMIN_BASE } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -17,7 +18,6 @@ function hasActiveDescendant(node, currentId) {
 function SidebarNode({ node, depth = 0, currentSectionId, onNavigate, expandedIds, onToggle }) {
   const hasChildren   = Boolean(node.children && node.children.length > 0);
   const isSelfActive  = currentSectionId === node.id;
-  const isChildActive = hasActiveDescendant(node, currentSectionId);
   const isExpanded    = expandedIds.has(node.id);
 
   return (
@@ -102,10 +102,42 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
   const tree = buildTree(sections);
   const { pathname } = useLocation();
   const { sectionId } = useParams();
+  const [searchParams] = useSearchParams();
   const { isAdmin } = useAuth();
+  const { files = [] } = useAllFiles();
+
+  // Compute live resource counts
+  const totalFiles = files.length;
+  const pdfCount = useMemo(() => files.filter((f) => f.type === 'pdf').length, [files]);
+  const imgCount = useMemo(() => files.filter((f) => f.type === 'img').length, [files]);
 
   // expandedIds lives here — survives tree re-renders, never reset by React recycling
   const [expandedIds, setExpandedIds] = useState(() => new Set());
+
+  // Collect all folder IDs that have children for expand/collapse all
+  const allParentIds = useMemo(() => {
+    const ids = [];
+    const collect = (nodes) => {
+      for (const node of nodes) {
+        if (node.children?.length) {
+          ids.push(node.id);
+          collect(node.children);
+        }
+      }
+    };
+    collect(tree);
+    return ids;
+  }, [tree]);
+
+  const areAllExpanded = allParentIds.length > 0 && expandedIds.size >= allParentIds.length;
+
+  const handleToggleAll = () => {
+    if (areAllExpanded) {
+      setExpandedIds(new Set());
+    } else {
+      setExpandedIds(new Set(allParentIds));
+    }
+  };
 
   // When active section changes, expand all its ancestors automatically
   useEffect(() => {
@@ -135,176 +167,240 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
     });
   }, []);
 
-  const isBrowseRoot = pathname === '/browse';
+  const isBrowseRoot = pathname === '/browse' && !searchParams.get('type');
+  const isPdfActive   = pathname === '/browse' && searchParams.get('type') === 'pdf';
+  const isImgActive   = pathname === '/browse' && searchParams.get('type') === 'img';
 
   return (
     <aside
       className={`sidebar-container${isMobile ? ' sidebar-container--mobile' : ''}`}
-      aria-label="Academic Sections Navigation"
+      aria-label="Academic Navigation"
     >
-      {/* Mobile Drawer Header */}
+      {/* Mobile Drawer Top Bar (only displayed when inside the mobile slide drawer) */}
       {isMobile && (
-        <>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingBottom: 'var(--space-3)',
-              marginBottom: 'var(--space-3)',
-              borderBottom: '1px solid var(--color-border-light)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <div
-                style={{
-                  width: 28, height: 28, borderRadius: 'var(--radius-md)',
-                  background: 'var(--color-accent-muted)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                </svg>
-              </div>
-              <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: 'var(--text-base)', color: 'var(--color-text)' }}>
-                CybrStudy
-              </span>
+        <div className="sidebar-mobile-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <div
+              style={{
+                width: 30, height: 30, borderRadius: 'var(--radius-md)',
+                background: 'var(--color-accent-muted)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" strokeWidth="2" strokeLinecap="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
             </div>
-
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm btn-icon"
-              onClick={onClose}
-              aria-label="Close sidebar"
-              title="Close sidebar"
-              id="mobile-sidebar-close-btn"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Mobile Quick Links Section */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', marginBottom: 'var(--space-4)', paddingBottom: 'var(--space-4)', borderBottom: '1px solid var(--color-border-light)' }}>
-            <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-text-3)', fontWeight: 600, paddingLeft: 'var(--space-2)', marginBottom: 'var(--space-1)' }}>
-              Menu
+            <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 700, fontSize: 'var(--text-base)', color: 'var(--color-text)' }}>
+              CybrStudy
             </span>
-            <Link
-              to="/"
-              onClick={onClose}
-              className={`sidebar-root-link${pathname === '/' ? ' sidebar-root-link--active' : ''}`}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-              <span>Home</span>
-            </Link>
-            <Link
-              to="/browse"
-              onClick={onClose}
-              className={`sidebar-root-link${isBrowseRoot ? ' sidebar-root-link--active' : ''}`}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-              </svg>
-              <span>Browse All</span>
-            </Link>
-            {isAdmin && (
-              <Link
-                to={`${ADMIN_BASE}/dashboard`}
-                onClick={onClose}
-                className="sidebar-root-link"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-                <span>Admin Dashboard</span>
-              </Link>
-            )}
           </div>
-        </>
+
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm btn-icon"
+            onClick={onClose}
+            aria-label="Close sidebar"
+            title="Close sidebar"
+            id="mobile-sidebar-close-btn"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
       )}
 
-      {/* Header Label */}
-      <div className="sidebar-header-row">
-        <span className="sidebar-title">Academic Folders</span>
-        <span style={{ fontSize: '11px', color: 'var(--color-text-3)', fontWeight: 500 }}>
-          {sections.length} {sections.length === 1 ? 'folder' : 'folders'}
-        </span>
+      {/* Quick Search Trigger */}
+      <button
+        type="button"
+        className="sidebar-search-btn"
+        onClick={() => {
+          if (isMobile && onClose) onClose();
+          window.dispatchEvent(new CustomEvent('open-search-modal'));
+        }}
+        aria-label="Search study materials"
+        id="sidebar-quick-search-btn"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <span className="sidebar-search-label">Quick search…</span>
+        <kbd className="sidebar-search-kbd">⌘K</kbd>
+      </button>
+
+      {/* Main Navigation Section */}
+      <div className="sidebar-group">
+        <span className="sidebar-group-heading">Navigation</span>
+        <nav className="sidebar-nav-list" aria-label="Main links">
+          <Link
+            to="/"
+            onClick={onClose}
+            className={`sidebar-root-link${pathname === '/' ? ' sidebar-root-link--active' : ''}`}
+            id="sidebar-nav-home"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <span className="sidebar-link-text">Home</span>
+          </Link>
+
+          <Link
+            to="/browse"
+            onClick={onClose}
+            className={`sidebar-root-link${isBrowseRoot ? ' sidebar-root-link--active' : ''}`}
+            id="sidebar-nav-browse"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+            </svg>
+            <span className="sidebar-link-text">All Materials</span>
+            {totalFiles > 0 && (
+              <span className="sidebar-node-badge" title={`${totalFiles} total materials`}>
+                {totalFiles}
+              </span>
+            )}
+          </Link>
+
+          {isAdmin && (
+            <Link
+              to={`${ADMIN_BASE}/dashboard`}
+              onClick={onClose}
+              className={`sidebar-root-link${pathname.includes('/dashboard') ? ' sidebar-root-link--active' : ''}`}
+              style={{ color: 'var(--color-accent)' }}
+              id="sidebar-nav-admin"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span className="sidebar-link-text">Admin Panel</span>
+              <span className="sidebar-badge-admin">Admin</span>
+            </Link>
+          )}
+        </nav>
       </div>
 
-      {/* Quick Root Browse Link */}
-      <Link
-        to="/browse"
-        className={`sidebar-root-link${isBrowseRoot ? ' sidebar-root-link--active' : ''}`}
-        onClick={onClose}
-        id="sidebar-browse-root-link"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
-        </svg>
-        <span>All Materials</span>
-      </Link>
+      {/* Quick Study Resources */}
+      <div className="sidebar-group">
+        <span className="sidebar-group-heading">Resource Types</span>
+        <div className="sidebar-nav-list">
+          <Link
+            to="/browse?type=pdf"
+            onClick={onClose}
+            className={`sidebar-root-link${isPdfActive ? ' sidebar-root-link--active' : ''}`}
+            id="sidebar-filter-pdf"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-error)" strokeWidth="1.75" strokeLinecap="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            <span className="sidebar-link-text">PDF Documents</span>
+            {pdfCount > 0 && <span className="sidebar-node-badge">{pdfCount}</span>}
+          </Link>
 
-      {/* Loading Skeletons */}
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', padding: 'var(--space-2)' }}>
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="skeleton" style={{ height: 34, borderRadius: 'var(--radius-lg)' }} />
-          ))}
+          <Link
+            to="/browse?type=img"
+            onClick={onClose}
+            className={`sidebar-root-link${isImgActive ? ' sidebar-root-link--active' : ''}`}
+            id="sidebar-filter-img"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth="1.75" strokeLinecap="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+            <span className="sidebar-link-text">Diagrams & Images</span>
+            {imgCount > 0 && <span className="sidebar-node-badge">{imgCount}</span>}
+          </Link>
         </div>
-      ) : tree.length === 0 ? (
-        <div style={{ padding: 'var(--space-4) var(--space-2)', textAlign: 'center' }}>
-          <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)' }}>
-            No folders created yet.
-          </p>
-        </div>
-      ) : (
-        /* Recursive Folder Tree */
-        <ul className="sidebar-tree">
-          {tree.map((node) => (
-            <SidebarNode
-              key={node.id}
-              node={node}
-              depth={0}
-              currentSectionId={sectionId}
-              onNavigate={onClose}
-              expandedIds={expandedIds}
-              onToggle={handleToggle}
-            />
-          ))}
-        </ul>
-      )}
+      </div>
 
-      {/* Sidebar Footer with Theme Switcher */}
+      {/* Academic Folders Section */}
+      <div className="sidebar-group sidebar-group--folders">
+        <div className="sidebar-header-row">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <span className="sidebar-title">Academic Folders</span>
+            <span className="sidebar-counter-tag">
+              {sections.length}
+            </span>
+          </div>
+
+          {allParentIds.length > 0 && (
+            <button
+              type="button"
+              className="sidebar-collapse-all-btn"
+              onClick={handleToggleAll}
+              title={areAllExpanded ? 'Collapse all subfolders' : 'Expand all subfolders'}
+              aria-label={areAllExpanded ? 'Collapse all subfolders' : 'Expand all subfolders'}
+            >
+              {areAllExpanded ? 'Collapse' : 'Expand'}
+            </button>
+          )}
+        </div>
+
+        {/* Loading Skeletons */}
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', padding: 'var(--space-1) 0' }}>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="skeleton" style={{ height: 32, borderRadius: 'var(--radius-md)' }} />
+            ))}
+          </div>
+        ) : tree.length === 0 ? (
+          <div style={{ padding: 'var(--space-3) var(--space-2)', textAlign: 'center' }}>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)' }}>
+              No academic folders created yet.
+            </p>
+          </div>
+        ) : (
+          /* Recursive Folder Tree */
+          <ul className="sidebar-tree">
+            {tree.map((node) => (
+              <SidebarNode
+                key={node.id}
+                node={node}
+                depth={0}
+                currentSectionId={sectionId}
+                onNavigate={onClose}
+                expandedIds={expandedIds}
+                onToggle={handleToggle}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Batch & System Info Card */}
+      <div className="sidebar-info-card">
+        <div className="sidebar-info-card-header">
+          <div className="sidebar-status-dot" aria-hidden="true" />
+          <span className="sidebar-info-card-title">CybrStudy • Batch B</span>
+        </div>
+        <p className="sidebar-info-card-text">
+          Class of 2025 – 2029 • Cyber Security
+        </p>
+        <div className="sidebar-info-card-footer">
+          <span>Drive Sync Active</span>
+          <span className="sidebar-info-chip">v1.2</span>
+        </div>
+      </div>
+
+      {/* Sidebar Footer with Theme Switcher & Shortcuts */}
       <div className="sidebar-footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', fontWeight: 500 }}>
-            Theme
-          </span>
-          <ThemeToggle showLabel id="sidebar-theme-toggle" />
-        </div>
-
-        <Link
-          to="/"
-          style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-3)', textDecoration: 'none' }}
-          onClick={onClose}
-        >
-          Home
-        </Link>
+        <ThemeToggle showLabel id="sidebar-theme-toggle" />
+        <span className="sidebar-footer-hint">
+          Press <kbd>/</kbd>
+        </span>
       </div>
     </aside>
   );

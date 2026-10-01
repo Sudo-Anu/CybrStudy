@@ -15,7 +15,7 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
   const { isAdmin } = useAuth();
   const [searchModalOpen, setSearchModalOpen] = useState(false);
 
-  // Global Ctrl+K / Cmd+K / / shortcut
+  // Global Ctrl+K / Cmd+K / / shortcut and custom event listener
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -26,8 +26,14 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
         setSearchModalOpen(true);
       }
     };
+    const handleOpenSearch = () => setSearchModalOpen(true);
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-search-modal', handleOpenSearch);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-search-modal', handleOpenSearch);
+    };
   }, []);
 
   const isActive = (to) => {
