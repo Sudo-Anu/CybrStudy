@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: Verify user is signed in with a valid token and email
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    // Helper: Check if signed-in user's email exists in the admins collection
+    // Note: Firestore security rules string method is .lower() or exact match.
+    // We check both direct email and lowercase for complete safety.
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
+      );
+    }
+
+    // Helper: Check if account is marked disabled in users collection
+    function isAccountDisabled() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.disabled == true;
+    }
+
+    // Sections — active authenticated users can read; only verified admins can create/update/delete
+    match /sections/{document=**} {
+      allow read:  if isSignedIn() && !isAccountDisabled();
+      allow write: if isAdmin() && !isAccountDisabled();
+    }
+
+    // Files metadata — active authenticated users can read; only verified admins can modify
+    match /files/{document=**} {
+      allow read:  if isSignedIn() && !isAccountDisabled();
+      allow write: if isAdmin() && !isAccountDisabled();
+    }
+
+    // Notifications — active authenticated users can read; only verified admins can modify
+    match /notifications/{document=**} {
+      allow read:  if isSignedIn() && !isAccountDisabled();
+      allow write: if isAdmin() && !isAccountDisabled();
+    }
+
+    // Users collection:
+    // - Regular users can only read & write their OWN document (e.g. updating profile / session timestamp)
+    // - Users CANNOT modify their own `disabled` or `isAdmin` fields (prevents privilege escalation)
+    // - Admins can read & manage all user records
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+
+      allow create: if isSignedIn() && (
+        (request.auth.uid == uid && (!request.resource.data.keys().hasAny(['isAdmin', 'disabled']) || request.resource.data.isAdmin == false)) ||
+        isAdmin()
+      );
+
+      allow update: if isSignedIn() && (
+        (request.auth.uid == uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'disabled'])) ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // Admins collection:
+    // - ONLY existing verified admins can read, create, update, or delete admin records
+    // - Non-admins cannot read or write any documents here
+    match /admins/{email} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

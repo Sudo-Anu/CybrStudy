@@ -8,6 +8,9 @@
 // Optional: set a specific parent folder ID to keep uploads organized
 var PARENT_FOLDER_ID = ''; // Leave empty to use Drive root
 
+// Optional: Set a secret token for write/delete actions if desired (leave empty to allow verified client requests)
+var AUTH_SECRET = '';
+
 // ---- Entry point ----
 function doPost(e) {
   var cors = ContentService.createTextOutput();
@@ -24,6 +27,14 @@ function doPost(e) {
     var body   = JSON.parse(e.postData.contents);
     var action = body.action;
     var result = {};
+
+    // Validate AUTH_SECRET if configured
+    if (AUTH_SECRET && (action === 'upload' || action === 'delete')) {
+      if (body.authSecret !== AUTH_SECRET) {
+        cors.setContent(JSON.stringify({ error: 'Unauthorized: Invalid authentication secret.' }));
+        return cors;
+      }
+    }
 
     if (action === 'upload') {
       result = handleUpload(body);

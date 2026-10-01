@@ -685,4 +685,207 @@
   padding: var(--space-2) var(--space-3);
 }
 
+/* =============================================================
+   User Manager Dashboard Styles
+   ============================================================= */
+
+.user-manager-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.user-stat-card {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-alt);
+  border: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-stat-card--accent {
+  background: var(--color-accent-bg);
+  border-color: var(--color-accent-border);
+}
+
+.user-stat-card-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-3);
+  font-weight: var(--fw-medium);
+}
+
+.user-stat-card--accent .user-stat-card-label {
+  color: var(--color-accent);
+}
+
+.user-stat-card-val {
+  font-size: var(--text-xl);
+  font-weight: var(--fw-bold);
+  color: var(--color-text);
+}
+
+.user-stat-card--accent .user-stat-card-val {
+  color: var(--color-accent);
+}
+
+.user-manager-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.user-manager-search-bar {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.user-manager-filter-pills {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.user-filter-pill {
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-surface);
+  color: var(--color-text-2);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.user-filter-pill:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.user-filter-pill--active {
+  background: var(--color-accent-bg);
+  border-color: var(--color-accent-border);
+  color: var(--color-accent);
+  font-weight: var(--fw-semibold);
+}
+
+.user-manager-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.user-row-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3) var(--space-4);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.user-row-card:hover {
+  border-color: var(--color-accent-border);
+}
+
+.user-row-card--self {
+  border-color: var(--color-accent-border);
+  background: linear-gradient(to right, var(--color-accent-bg), var(--color-surface));
+}
+
+.user-row-card--disabled {
+  opacity: 0.72;
+  border-style: dashed;
+}
+
+.user-row-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  flex: 1;
+}
+
+.user-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.user-row-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.user-row-name {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-row-email {
+  font-size: var(--text-xs);
+  color: var(--color-text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-row-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 11px;
+  color: var(--color-text-3);
+  margin-top: 2px;
+}
+
+.user-row-badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.user-row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .user-row-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+  .user-row-badges {
+    margin-top: var(--space-1);
+  }
+  .user-row-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    width: 100%;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border-light);
+  }
+}
+
+
 

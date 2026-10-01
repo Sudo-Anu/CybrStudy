@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { buildTree } from '../../hooks/useSections';
 import { useAllFiles } from '../../hooks/useFiles';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { ADMIN_BASE } from '../../utils/constants';
 import ThemeToggle from '../ui/ThemeToggle';
 
@@ -16,9 +17,9 @@ function hasActiveDescendant(node, currentId) {
 
 // Tree node — expansion state is owned by the parent via expandedIds Set
 function SidebarNode({ node, depth = 0, currentSectionId, onNavigate, expandedIds, onToggle }) {
-  const hasChildren   = Boolean(node.children && node.children.length > 0);
-  const isSelfActive  = currentSectionId === node.id;
-  const isExpanded    = expandedIds.has(node.id);
+  const hasChildren = Boolean(node.children && node.children.length > 0);
+  const isSelfActive = currentSectionId === node.id;
+  const isExpanded = expandedIds.has(node.id);
 
   return (
     <li className="sidebar-node-item">
@@ -103,8 +104,21 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
   const { pathname } = useLocation();
   const { sectionId } = useParams();
   const [searchParams] = useSearchParams();
-  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAdmin, logout } = useAuth();
+  const { addToast } = useToast();
   const { files = [] } = useAllFiles();
+
+  const handleSignOut = async () => {
+    try {
+      if (isMobile && onClose) onClose();
+      if (logout) await logout();
+      addToast('Signed out successfully.', 'info');
+      navigate('/login');
+    } catch (err) {
+      addToast('Failed to sign out: ' + err.message, 'error');
+    }
+  };
 
   // Compute live resource counts
   const totalFiles = files.length;
@@ -155,7 +169,7 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
       expandAncestors(tree);
       return next;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sectionId, sections]);
 
   const handleToggle = useCallback((id) => {
@@ -168,8 +182,8 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
   }, []);
 
   const isBrowseRoot = pathname === '/browse' && !searchParams.get('type');
-  const isPdfActive   = pathname === '/browse' && searchParams.get('type') === 'pdf';
-  const isImgActive   = pathname === '/browse' && searchParams.get('type') === 'img';
+  const isPdfActive = pathname === '/browse' && searchParams.get('type') === 'pdf';
+  const isImgActive = pathname === '/browse' && searchParams.get('type') === 'img';
 
   return (
     <aside
@@ -386,24 +400,47 @@ export default function Sidebar({ sections = [], loading = false, isMobile = fal
         <div className="sidebar-info-card">
           <div className="sidebar-info-card-header">
             <div className="sidebar-status-dot" aria-hidden="true" />
-            <span className="sidebar-info-card-title">CybrStudy • Batch B</span>
+            <span className="sidebar-info-card-title">CybrStudy • 2026</span>
           </div>
+          {user?.email && (
+            <p className="sidebar-info-card-email" title={user.email}>
+              {user.email}
+            </p>
+          )}
           <p className="sidebar-info-card-text">
-            Class of 2025 – 2029 • Cyber Security
+            From Class of 2025 – 2029 • Cyber Security
           </p>
           <div className="sidebar-info-card-footer">
             <span>Drive Sync Active</span>
-            <span className="sidebar-info-chip">v1.2</span>
+            <span className="sidebar-info-chip">v1.5.5</span>
           </div>
         </div>
       </div>
 
-      {/* Pinned Bottom Footer with Theme Switcher & Shortcuts */}
+      {/* Pinned Bottom Footer with Theme Switcher & Sign Out */}
       <div className="sidebar-footer">
         <ThemeToggle showLabel id="sidebar-theme-toggle" />
-        <span className="sidebar-footer-hint">
-          Press <kbd>/</kbd>
-        </span>
+        {user ? (
+          <button
+            type="button"
+            className="sidebar-signout-btn"
+            onClick={handleSignOut}
+            title={`Signed in as ${user.email} — Click to sign out`}
+            aria-label="Sign out"
+            id="sidebar-signout-btn"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Sign out</span>
+          </button>
+        ) : (
+          <span className="sidebar-footer-hint">
+            Press <kbd>/</kbd>
+          </span>
+        )}
       </div>
     </aside>
   );

@@ -44,40 +44,63 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper: check if the signed-in user is in the admins collection
+    // Helper: Verify user is signed in with a valid token and email
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    // Helper: Check if signed-in user's email exists in the admins collection
     function isAdmin() {
-      return request.auth != null &&
-             exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
+      );
     }
 
-    // Sections — any authenticated user can read; only admins can write
+    // Helper: Check if account is marked disabled in users collection
+    function isAccountDisabled() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.disabled == true;
+    }
+
+    // Sections — active authenticated users can read; only verified admins can write
     match /sections/{document=**} {
-      allow read:  if request.auth != null;
-      allow write: if isAdmin();
+      allow read:  if isSignedIn() && !isAccountDisabled();
+      allow write: if isAdmin() && !isAccountDisabled();
     }
 
-    // Files — any authenticated user can read; only admins can write
+    // Files — active authenticated users can read; only verified admins can write
     match /files/{document=**} {
-      allow read:  if request.auth != null;
-      allow write: if isAdmin();
+      allow read:  if isSignedIn() && !isAccountDisabled();
+      allow write: if isAdmin() && !isAccountDisabled();
     }
 
-    // Notifications — any authenticated user can read; only admins can write
+    // Notifications — active authenticated users can read; only verified admins can write
     match /notifications/{document=**} {
-      allow read:  if request.auth != null;
-      allow write: if isAdmin();
+      allow read:  if isSignedIn() && !isAccountDisabled();
+      allow write: if isAdmin() && !isAccountDisabled();
     }
 
-    // Users — only authenticated users can read their own doc; admins can read all
+    // Users — users can only manage their own doc; cannot escalate isAdmin or disabled
     match /users/{uid} {
-      allow read:  if request.auth != null && (request.auth.uid == uid || isAdmin());
-      allow write: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+
+      allow create: if isSignedIn() && (
+        (request.auth.uid == uid && (!request.resource.data.keys().hasAny(['isAdmin', 'disabled']) || request.resource.data.isAdmin == false)) ||
+        isAdmin()
+      );
+
+      allow update: if isSignedIn() && (
+        (request.auth.uid == uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'disabled'])) ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
     }
 
-    // Admins — only admins can read or write
+    // Admins — only verified admins can read or write
     match /admins/{email} {
-      allow read:  if isAdmin();
-      allow write: if isAdmin();
+      allow read, write: if isAdmin();
     }
   }
 }

@@ -40,12 +40,12 @@ export function AuthProvider({ children }) {
 
         // Real-time listener for single active device enforcement
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-        sessionListenerUnsubRef.current = onSnapshot(userDocRef, (snap) => {
+        const unsubSnapshot = onSnapshot(userDocRef, (snap) => {
           if (!snap.exists()) return;
           const data = snap.data();
           const serverSessionId = data?.currentSessionId;
 
-          // If no session is recorded in Firestore yet (e.g. existing user before update), stamp it
+          // If no session is recorded in Firestore yet, stamp it
           if (!serverSessionId) {
             registerUserProfile(firebaseUser, localSessionId);
             return;
@@ -63,6 +63,24 @@ export function AuthProvider({ children }) {
         }, (err) => {
           console.warn('[CybrStudy] Session listener warning:', err.message);
         });
+
+        // Periodic presence heartbeat every 2 minutes while active
+        const heartbeatInterval = setInterval(() => {
+          registerUserProfile(firebaseUser);
+        }, 2 * 60 * 1000);
+
+        const onVisibilityChange = () => {
+          if (document.visibilityState === 'visible') {
+            registerUserProfile(firebaseUser);
+          }
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
+        sessionListenerUnsubRef.current = () => {
+          unsubSnapshot();
+          clearInterval(heartbeatInterval);
+          document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
       } else {
         setIsAdmin(false);
       }
@@ -79,7 +97,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, isAdmin, loading, logout: logoutUser }}>
       {children}
     </AuthContext.Provider>
   );

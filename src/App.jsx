@@ -4,23 +4,20 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 import Layout from './components/layout/Layout';
-import HomePage        from './pages/HomePage';
-import BrowsePage      from './pages/BrowsePage';
-import AdminLoginPage  from './pages/AdminLoginPage';
-import AdminPage       from './pages/AdminPage';
-import UserLoginPage   from './pages/UserLoginPage';
-import { ADMIN_BASE }  from './utils/constants';
+import HomePage   from './pages/HomePage';
+import BrowsePage from './pages/BrowsePage';
+import LoginPage  from './pages/LoginPage';
+import AdminPage  from './pages/AdminPage';
+import { ADMIN_BASE } from './utils/constants';
 
 // HashRouter is required for GitHub Pages static hosting.
 // All routes use /#/ prefix automatically.
-//
-// Admin route base is configurable via VITE_ADMIN_ROUTE in .env, defaults to '/login'.
 
 /**
  * Wraps any route that requires a logged-in user.
  * - While Firebase resolves auth state → shows a centered spinner.
  * - Logged in  → renders children normally.
- * - Logged out → redirects to /user-login.
+ * - Logged out → redirects to /login.
  */
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
@@ -40,7 +37,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!user) {
-    return <Navigate to="/user-login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;
@@ -50,8 +47,8 @@ function ProtectedRoute({ children }) {
  * Wraps any route that requires a verified admin.
  * - While Firebase resolves auth state → shows a centered spinner.
  * - Logged in AND isAdmin → renders children.
- * - Logged in but NOT admin → redirects to admin login (prevents escalation).
- * - Logged out → redirects to admin login.
+ * - Logged in but NOT admin → redirects to home / (prevents privilege escalation).
+ * - Logged out → redirects to /login.
  */
 function AdminRoute({ children }) {
   const { user, isAdmin, loading } = useAuth();
@@ -70,8 +67,12 @@ function AdminRoute({ children }) {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -96,27 +97,27 @@ export default function App() {
                   <ProtectedRoute><Layout><BrowsePage /></Layout></ProtectedRoute>
                 } />
 
-                {/* ---- User login (public) ---- */}
-                <Route path="/user-login" element={<UserLoginPage />} />
+                {/* ---- Unified Login (public) ---- */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/user-login" element={<Navigate to="/login" replace />} />
 
                 {/* ---- Admin routes (no layout wrapper) ---- */}
-                <Route path="/login"           element={<AdminLoginPage />} />
-                {/* AdminRoute enforces both authentication AND admin role at the router level */}
                 <Route path="/login/dashboard" element={<AdminRoute><AdminPage /></AdminRoute>} />
+                <Route path="/admin" element={<Navigate to="/login/dashboard" replace />} />
+                <Route path="/admin/dashboard" element={<AdminRoute><AdminPage /></AdminRoute>} />
 
                 {/* If a custom ADMIN_BASE is specified, support it too */}
                 {ADMIN_BASE !== '/login' && (
                   <>
-                    <Route path={ADMIN_BASE}                element={<AdminLoginPage />} />
+                    <Route path={ADMIN_BASE}                element={<LoginPage />} />
                     <Route path={`${ADMIN_BASE}/dashboard`} element={<AdminRoute><AdminPage /></AdminRoute>} />
                   </>
                 )}
 
                 {/* Convenience & legacy redirects */}
-                <Route path="/admin-portal-xyz"  element={<Navigate to="/login" replace />} />
-                <Route path="/admin-portal-xyz/*" element={<Navigate to="/login" replace />} />
-                <Route path="/admin"   element={<Navigate to="/login" replace />} />
-                <Route path="/admin/*" element={<Navigate to="/login" replace />} />
+                <Route path="/admin-portal-xyz"   element={<Navigate to="/login/dashboard" replace />} />
+                <Route path="/admin-portal-xyz/*" element={<Navigate to="/login/dashboard" replace />} />
+                <Route path="/admin/*"            element={<Navigate to="/login/dashboard" replace />} />
 
                 {/* ---- Fallback ---- */}
                 <Route path="*" element={<Navigate to="/" replace />} />

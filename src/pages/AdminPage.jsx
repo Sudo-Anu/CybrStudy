@@ -11,7 +11,6 @@ import NotificationManager from '../components/admin/NotificationManager';
 import Spinner from '../components/ui/Spinner';
 import { useToast } from '../context/ToastContext';
 import ThemeToggle from '../components/ui/ThemeToggle';
-import { ADMIN_BASE } from '../utils/constants';
 
 const TABS = [
   { id: 'sections',      label: 'Sections',      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> },
@@ -32,21 +31,20 @@ export default function AdminPage() {
 
   if (authLoading) return <Spinner center size="lg" />;
 
-  // Guard: not logged in → admin login
+  // Guard: not logged in → login
   if (!user) {
-    return <Navigate to={ADMIN_BASE} replace />;
+    return <Navigate to="/login" replace />;
   }
 
-  // Guard: logged in but NOT an admin → back to admin login
+  // Guard: logged in but NOT an admin → back to main study portal
   if (!isAdmin) {
-    return <Navigate to={ADMIN_BASE} replace />;
+    return <Navigate to="/" replace />;
   }
-
 
   const handleLogout = async () => {
     await logoutAdmin();
-    addToast('Signed out.', 'info');
-    navigate(ADMIN_BASE);
+    addToast('Signed out successfully.', 'info');
+    navigate('/login');
   };
 
   const selectedSection = sections.find((s) => s.id === selectedSectionId);

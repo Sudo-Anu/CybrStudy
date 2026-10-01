@@ -5,6 +5,8 @@
 // This client only calls the published Web App URL.
 // =============================================================
 
+import { auth } from './firebase';
+
 const PROXY_URL = import.meta.env.VITE_GDRIVE_PROXY_URL;
 
 /**
@@ -64,6 +66,14 @@ async function parseProxyResponse(response, context = 'Drive request') {
 export async function uploadToDrive(file, folderId = '', onProgress = () => {}) {
   if (!PROXY_URL) throw new Error('Google Drive proxy URL is not configured.');
 
+  // Fetch current user idToken if authenticated for secure proxy verification
+  let idToken = null;
+  try {
+    if (auth.currentUser) {
+      idToken = await auth.currentUser.getIdToken(true);
+    }
+  } catch {}
+
   // Read file as base64
   const base64 = await fileToBase64(file);
   onProgress(15);
@@ -74,6 +84,7 @@ export async function uploadToDrive(file, folderId = '', onProgress = () => {}) 
     mimeType: file.type,
     data:     base64,
     folderId,
+    idToken,
   };
 
   onProgress(35);
@@ -114,9 +125,16 @@ export async function uploadToDrive(file, folderId = '', onProgress = () => {}) 
 export async function deleteFromDrive(fileId) {
   if (!PROXY_URL) throw new Error('Google Drive proxy URL is not configured.');
 
+  let idToken = null;
+  try {
+    if (auth.currentUser) {
+      idToken = await auth.currentUser.getIdToken(true);
+    }
+  } catch {}
+
   const response = await fetch(PROXY_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'delete', fileId }),
+    body: JSON.stringify({ action: 'delete', fileId, idToken }),
   });
 
   return parseProxyResponse(response, 'Drive delete');
@@ -129,9 +147,16 @@ export async function deleteFromDrive(fileId) {
 export async function getDriveFileInfo(fileId) {
   if (!PROXY_URL) throw new Error('Google Drive proxy URL is not configured.');
 
+  let idToken = null;
+  try {
+    if (auth.currentUser) {
+      idToken = await auth.currentUser.getIdToken(true);
+    }
+  } catch {}
+
   const response = await fetch(PROXY_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'info', fileId }),
+    body: JSON.stringify({ action: 'info', fileId, idToken }),
   });
 
   return parseProxyResponse(response, 'Drive file info');

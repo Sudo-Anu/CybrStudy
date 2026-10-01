@@ -46,9 +46,12 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
       <header
         className="site-header"
         style={{
-          position: 'sticky',
+          position: 'fixed',
           top: 0,
-          zIndex: 50,
+          left: 0,
+          right: 0,
+          width: '100%',
+          zIndex: 100,
           height: 'var(--header-height)',
           background: 'var(--color-header-bg)',
           backdropFilter: 'blur(12px)',
@@ -233,6 +236,7 @@ export default function Header({ onMenuClick, isMobileMenuOpen }) {
           .header-search-container { display: none !important; }
           .mobile-search-trigger-btn { display: flex !important; }
           .desktop-nav-links { display: none !important; }
+          .mobile-menu-btn { display: flex !important; align-items: center; justify-content: center; }
         }
       `}</style>
 
