@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { loginUser, checkIsAdmin } from '../services/authService';
 import { ADMIN_BASE } from '../utils/constants';
@@ -15,7 +15,7 @@ export default function LoginPage() {
         sessionStorage.removeItem('cybrstudy_kicked_reason');
         return 'You were signed out because your account was logged in from another device.';
       }
-    } catch {}
+    } catch { }
     return '';
   });
   const [submitting, setSubmitting] = useState(false);
@@ -209,15 +209,13 @@ export default function LoginPage() {
             <p className="user-login-contact-title">Access is invite-only</p>
             <p className="user-login-contact-sub">
               No self-signup — to request access{', '}
-              <a
-                href="https://sudo-anu.github.io"
+              <Link
+                to="/contact"
                 className="user-login-contact-link"
                 id="user-login-contact-link"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 contact me
-              </a>
+              </Link>
               .
             </p>
           </div>

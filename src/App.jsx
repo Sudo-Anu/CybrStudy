@@ -8,6 +8,7 @@ import HomePage   from './pages/HomePage';
 import BrowsePage from './pages/BrowsePage';
 import LoginPage  from './pages/LoginPage';
 import AdminPage  from './pages/AdminPage';
+import ContactPage from './pages/ContactPage';
 import { ADMIN_BASE } from './utils/constants';
 
 // HashRouter is required for GitHub Pages static hosting.
@@ -100,6 +101,7 @@ export default function App() {
                 {/* ---- Unified Login (public) ---- */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/user-login" element={<Navigate to="/login" replace />} />
+                <Route path="/contact" element={<ContactPage />} />
 
                 {/* ---- Admin routes (no layout wrapper) ---- */}
                 <Route path="/login/dashboard" element={<AdminRoute><AdminPage /></AdminRoute>} />

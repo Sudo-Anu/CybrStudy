@@ -24,7 +24,7 @@
           if (clean === 'login' || clean === 'admin' || clean === 'admin-portal-xyz') {
             var base = pathname.toLowerCase().indexOf('/cybrstudy') !== -1 ? '/CybrStudy/' : '/';
             window.location.replace(base + '#/login' + window.location.search);
-          } else if (clean.indexOf('browse') === 0) {
+          } else if (clean.indexOf('browse') === 0 || clean === 'contact') {
             var base = pathname.toLowerCase().indexOf('/cybrstudy') !== -1 ? '/CybrStudy/' : '/';
             window.location.replace(base + '#/' + clean + window.location.search);
           }
